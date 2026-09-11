@@ -1,0 +1,72 @@
+[settings]
+idiomatic_version_file_enable_tools = ["rust"]
+task.run_auto_install = false
+
+[tools]
+actionlint = "latest"
+yamlfmt = "latest"
+
+[tasks.all]
+alias = "a"
+description = "Format, lint, and test"
+run = [
+    { task = "fmt" },
+    { task = "lint" },
+    { task = "test" },
+]
+
+[tasks.build]
+alias = "b"
+description = "Build the application"
+run = "cargo build"
+
+[tasks.check]
+alias = "c"
+description = "Check all targets"
+run = "cargo check --all-targets"
+
+[tasks.fmt]
+alias = "f"
+description = "Format Rust source files"
+run = "cargo fmt --all"
+
+[tasks."fmt:check"]
+alias = ["fc", "fmt-check"]
+description = "Check Rust source formatting"
+run = "cargo fmt --all -- --check"
+
+[tasks.lint]
+alias = "l"
+description = "Lint all targets"
+run = "cargo clippy --all-targets"
+
+[tasks."lint:fix"]
+alias = ["lf", "lint-fix"]
+description = "Apply Clippy fixes"
+run = "cargo clippy --fix --allow-dirty --allow-staged"
+
+[tasks.run]
+alias = "r"
+description = "Run the application"
+raw_args = true
+run = "cargo run --"
+
+[tasks.test]
+alias = "t"
+description = "Run all tests"
+raw_args = true
+run = "cargo test"
+
+[tasks."lint:actions"]
+description = "Lint GitHub Actions workflows"
+run = "actionlint"
+
+[tasks."lint:yaml"]
+description = "Lint YAML files"
+run = '''
+yamlfmt \
+    -lint \
+    -quiet \
+    -formatter 'retain_line_breaks_single=true' \
+    $(git ls-files '*.yml' '*.yaml')
+'''
