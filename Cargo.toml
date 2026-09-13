@@ -4,6 +4,14 @@ version = "0.1.0-alpha.1"
 edition = "2024"
 
 [dependencies]
+serde = { version = "1.0.229", features = ["derive"] }
+shellexpand = { version = "3.1.2", default-features = false, features = ["base-0"] }
+thiserror = "2.0.20"
+toml = "1.1.6"
+url = "2.5.8"
+
+[dev-dependencies]
+anyhow = "1.0.104"
 
 [lints.clippy]
 expect_used = "deny"
