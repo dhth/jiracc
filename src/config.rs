@@ -14,10 +14,10 @@ pub struct JiraConfig {
 }
 
 #[derive(Debug)]
-pub struct JiraUrl(url::Url);
+pub struct JiraUrl(String);
 
 impl JiraUrl {
-    pub fn as_url(&self) -> &url::Url {
+    pub fn as_str(&self) -> &str {
         &self.0
     }
 }
@@ -139,7 +139,7 @@ impl TryFrom<String> for JiraUrl {
     type Error = ConfigError;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        let mut url = url::Url::parse(&value).map_err(ConfigError::InvalidJiraUrl)?;
+        let url = url::Url::parse(&value).map_err(ConfigError::InvalidJiraUrl)?;
 
         if !matches!(url.scheme(), "http" | "https") {
             return Err(ConfigError::UnsupportedJiraUrlScheme {
@@ -150,15 +150,7 @@ impl TryFrom<String> for JiraUrl {
             return Err(ConfigError::JiraUrlContainsQueryOrFragment);
         }
 
-        let path = url.path().trim_end_matches('/');
-        let canonical_path = if path.is_empty() {
-            "/".to_owned()
-        } else {
-            format!("{path}/")
-        };
-        url.set_path(&canonical_path);
-
-        Ok(Self(url))
+        Ok(Self(value))
     }
 }
 
@@ -222,10 +214,7 @@ jql = "project = TEST"
         let result = parse(config_str, test_environment)?;
 
         // THEN
-        assert_eq!(
-            result.jira.url.as_url().as_str(),
-            "https://jira.example.com/jira/"
-        );
+        assert_eq!(result.jira.url.as_str(), "https://jira.example.com/jira");
         assert_eq!(result.jira.token.as_str(), "secret-token");
         assert_eq!(result.jira.jql.as_str(), "project = TEST");
 
@@ -246,10 +235,7 @@ jql = "project = ${PROJECT}"
         let result = parse(config_str, test_environment)?;
 
         // THEN
-        assert_eq!(
-            result.jira.url.as_url().as_str(),
-            "https://jira.example.com/jira/"
-        );
+        assert_eq!(result.jira.url.as_str(), "https://jira.example.com/jira");
         assert_eq!(result.jira.token.as_str(), "secret-token");
         assert_eq!(result.jira.jql.as_str(), "project = TEST");
 
