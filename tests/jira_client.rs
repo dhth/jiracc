@@ -1,7 +1,8 @@
 use anyhow::{Context, Result, bail};
 use jiracc::application::IssueFetcher;
 use jiracc::config::{JiraJql, JiraToken, JiraUrl};
-use jiracc::jira::JiraClient;
+use jiracc::jira::{JiraClient, JiraClientError};
+use reqwest::StatusCode;
 use serde_json::{Value, json};
 use wiremock::matchers::{bearer_token, body_json, header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -138,6 +139,361 @@ async fn fetches_all_pages_using_the_page_size_returned_by_jira() -> Result<()> 
         .map(|issue| issue.key.as_str())
         .collect::<Vec<_>>();
     assert_eq!(issue_keys, ["TEST-1", "TEST-2", "TEST-3"]);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn an_empty_result_set_returns_no_issues() -> Result<()> {
+    // GIVEN
+    let context = TestContext::new().await?;
+    context
+        .expect_search(
+            0,
+            100,
+            ResponseTemplate::new(200).set_body_json(search_page(0, 100, 0, vec![])),
+        )
+        .await;
+
+    // WHEN
+    let issues = context.client.fetch_issues(&context.jql).await?;
+
+    // THEN
+    assert!(issues.is_empty());
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn continues_after_an_empty_intermediate_page() -> Result<()> {
+    // GIVEN
+    let context = TestContext::new().await?;
+    context
+        .expect_search(
+            0,
+            100,
+            ResponseTemplate::new(200).set_body_json(search_page(
+                0,
+                2,
+                5,
+                vec![
+                    minimal_jira_issue("10001", "TEST-1"),
+                    minimal_jira_issue("10002", "TEST-2"),
+                ],
+            )),
+        )
+        .await;
+    context
+        .expect_search(
+            2,
+            2,
+            ResponseTemplate::new(200).set_body_json(search_page(2, 2, 5, vec![])),
+        )
+        .await;
+    context
+        .expect_search(
+            4,
+            2,
+            ResponseTemplate::new(200).set_body_json(search_page(
+                4,
+                2,
+                5,
+                vec![minimal_jira_issue("10005", "TEST-5")],
+            )),
+        )
+        .await;
+
+    // WHEN
+    let issues = context.client.fetch_issues(&context.jql).await?;
+
+    // THEN
+    let issue_keys = issues
+        .iter()
+        .map(|issue| issue.key.as_str())
+        .collect::<Vec<_>>();
+    assert_eq!(issue_keys, ["TEST-1", "TEST-2", "TEST-5"]);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn follows_an_increasing_total() -> Result<()> {
+    // GIVEN
+    let context = TestContext::new().await?;
+    context
+        .expect_search(
+            0,
+            100,
+            ResponseTemplate::new(200).set_body_json(search_page(
+                0,
+                2,
+                3,
+                vec![
+                    minimal_jira_issue("10001", "TEST-1"),
+                    minimal_jira_issue("10002", "TEST-2"),
+                ],
+            )),
+        )
+        .await;
+    context
+        .expect_search(
+            2,
+            2,
+            ResponseTemplate::new(200).set_body_json(search_page(
+                2,
+                2,
+                5,
+                vec![
+                    minimal_jira_issue("10003", "TEST-3"),
+                    minimal_jira_issue("10004", "TEST-4"),
+                ],
+            )),
+        )
+        .await;
+    context
+        .expect_search(
+            4,
+            2,
+            ResponseTemplate::new(200).set_body_json(search_page(
+                4,
+                2,
+                5,
+                vec![minimal_jira_issue("10005", "TEST-5")],
+            )),
+        )
+        .await;
+
+    // WHEN
+    let issues = context.client.fetch_issues(&context.jql).await?;
+
+    // THEN
+    let issue_keys = issues
+        .iter()
+        .map(|issue| issue.key.as_str())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        issue_keys,
+        ["TEST-1", "TEST-2", "TEST-3", "TEST-4", "TEST-5"]
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn stops_after_a_decreasing_total() -> Result<()> {
+    // GIVEN
+    let context = TestContext::new().await?;
+    context
+        .expect_search(
+            0,
+            100,
+            ResponseTemplate::new(200).set_body_json(search_page(
+                0,
+                2,
+                5,
+                vec![
+                    minimal_jira_issue("10001", "TEST-1"),
+                    minimal_jira_issue("10002", "TEST-2"),
+                ],
+            )),
+        )
+        .await;
+    context
+        .expect_search(
+            2,
+            2,
+            ResponseTemplate::new(200).set_body_json(search_page(
+                2,
+                2,
+                3,
+                vec![minimal_jira_issue("10003", "TEST-3")],
+            )),
+        )
+        .await;
+
+    // WHEN
+    let issues = context.client.fetch_issues(&context.jql).await?;
+
+    // THEN
+    let issue_keys = issues
+        .iter()
+        .map(|issue| issue.key.as_str())
+        .collect::<Vec<_>>();
+    assert_eq!(issue_keys, ["TEST-1", "TEST-2", "TEST-3"]);
+
+    Ok(())
+}
+
+//------------//
+//  FAILURES  //
+//------------//
+
+#[tokio::test]
+async fn an_http_failure_on_a_later_page_returns_an_error() -> Result<()> {
+    // GIVEN
+    let context = TestContext::new().await?;
+    context
+        .expect_search(
+            0,
+            100,
+            ResponseTemplate::new(200).set_body_json(search_page(
+                0,
+                2,
+                3,
+                vec![
+                    minimal_jira_issue("10001", "TEST-1"),
+                    minimal_jira_issue("10002", "TEST-2"),
+                ],
+            )),
+        )
+        .await;
+    context
+        .expect_search(2, 2, ResponseTemplate::new(500))
+        .await;
+
+    // WHEN
+    let result = context.client.fetch_issues(&context.jql).await;
+
+    // THEN
+    assert!(matches!(
+        result,
+        Err(JiraClientError::ResponseStatus {
+            status: StatusCode::INTERNAL_SERVER_ERROR
+        })
+    ));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn an_unexpected_response_shape_on_a_later_page_returns_an_error() -> Result<()> {
+    // GIVEN
+    let context = TestContext::new().await?;
+    context
+        .expect_search(
+            0,
+            100,
+            ResponseTemplate::new(200).set_body_json(search_page(
+                0,
+                2,
+                3,
+                vec![
+                    minimal_jira_issue("10001", "TEST-1"),
+                    minimal_jira_issue("10002", "TEST-2"),
+                ],
+            )),
+        )
+        .await;
+    let mut issue_with_invalid_status = minimal_jira_issue("10003", "TEST-3");
+    issue_with_invalid_status["fields"]["status"] = json!("Open");
+    context
+        .expect_search(
+            2,
+            2,
+            ResponseTemplate::new(200).set_body_json(search_page(
+                2,
+                2,
+                3,
+                vec![issue_with_invalid_status],
+            )),
+        )
+        .await;
+
+    // WHEN
+    let result = context.client.fetch_issues(&context.jql).await;
+
+    // THEN
+    assert!(matches!(result, Err(JiraClientError::Decode(_))));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn invalid_json_on_a_later_page_returns_an_error() -> Result<()> {
+    // GIVEN
+    let context = TestContext::new().await?;
+    context
+        .expect_search(
+            0,
+            100,
+            ResponseTemplate::new(200).set_body_json(search_page(
+                0,
+                2,
+                3,
+                vec![
+                    minimal_jira_issue("10001", "TEST-1"),
+                    minimal_jira_issue("10002", "TEST-2"),
+                ],
+            )),
+        )
+        .await;
+    context
+        .expect_search(
+            2,
+            2,
+            ResponseTemplate::new(200).set_body_string("{not valid JSON"),
+        )
+        .await;
+
+    // WHEN
+    let result = context.client.fetch_issues(&context.jql).await;
+
+    // THEN
+    assert!(matches!(result, Err(JiraClientError::Decode(_))));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn an_unexpected_page_start_returns_an_error() -> Result<()> {
+    // GIVEN
+    let context = TestContext::new().await?;
+    context
+        .expect_search(
+            0,
+            100,
+            ResponseTemplate::new(200).set_body_json(search_page(1, 100, 1, vec![])),
+        )
+        .await;
+
+    // WHEN
+    let result = context.client.fetch_issues(&context.jql).await;
+
+    // THEN
+    assert!(matches!(
+        result,
+        Err(JiraClientError::UnexpectedPageStart {
+            requested: 0,
+            received: 1
+        })
+    ));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn a_zero_page_size_with_results_remaining_returns_an_error() -> Result<()> {
+    // GIVEN
+    let context = TestContext::new().await?;
+    context
+        .expect_search(
+            0,
+            100,
+            ResponseTemplate::new(200).set_body_json(search_page(0, 0, 1, vec![])),
+        )
+        .await;
+
+    // WHEN
+    let result = context.client.fetch_issues(&context.jql).await;
+
+    // THEN
+    assert!(matches!(
+        result,
+        Err(JiraClientError::ZeroPageSize {
+            start_at: 0,
+            total: 1
+        })
+    ));
 
     Ok(())
 }
