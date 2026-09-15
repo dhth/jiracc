@@ -1,4 +1,4 @@
-use crate::{config as configuration, paths};
+use crate::paths;
 use std::io::{self, Write};
 use std::path::PathBuf;
 
@@ -17,7 +17,7 @@ pub enum ValidateConfigError {
     Paths(#[from] paths::PathsError),
 
     #[error("configuration is invalid")]
-    Invalid(#[source] configuration::ConfigError),
+    Invalid(#[source] crate::config::ConfigError),
 
     #[error("couldn't write configuration validation result to stdout")]
     Write(#[source] io::Error),
@@ -36,7 +36,7 @@ pub fn validate(config_path: Option<PathBuf>) -> Result<(), ValidateConfigError>
         None => paths::get()?.config,
     };
 
-    configuration::load(&config_path).map_err(ValidateConfigError::Invalid)?;
+    crate::config::load(&config_path).map_err(ValidateConfigError::Invalid)?;
 
     io::stdout()
         .lock()

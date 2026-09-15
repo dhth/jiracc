@@ -64,7 +64,7 @@ description = "Update test snapshots"
 run = "cargo insta test --accept"
 
 [tasks."review-snapshots"]
-alias = "rs"
+alias = "re"
 description = "Review pending test snapshots"
 run = "cargo insta review"
 
