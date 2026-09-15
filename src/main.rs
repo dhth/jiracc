@@ -1,15 +1,20 @@
+mod cli;
+
+use clap::Parser;
 use jiracc::application;
-use jiracc::config;
-use jiracc::jira::JiraClient;
-use std::error::Error;
-use std::path::Path;
+use std::process::ExitCode;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
-    let config = config::load(Path::new("jiracc.toml"))?;
-    let jira_client = JiraClient::new(&config.jira.url, &config.jira.token);
+async fn main() -> ExitCode {
+    let args = cli::Args::parse();
+    let result = application::run(args.into()).await;
 
-    application::sync(&jira_client, &config.jira.jql).await?;
-
-    Ok(())
+    match result {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            let report = anyhow::Error::new(error);
+            eprintln!("{report:?}");
+            ExitCode::FAILURE
+        }
+    }
 }
