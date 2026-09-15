@@ -1,0 +1,4 @@
+[jira]
+url = "https://jira.example.com"
+token = "secret-token"
+jql = "project = TEST

@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 use jiracc::application;
+use std::path::PathBuf;
 
 /// jiracc lets you access your JIRA issues offline
 #[derive(Debug, Parser)]
@@ -21,6 +22,13 @@ enum Command {
 enum ConfigCommand {
     /// Print a sample configuration to stdout
     Sample,
+
+    /// Validate a configuration file
+    Validate {
+        /// Path to the configuration file
+        #[arg(long, value_name = "PATH")]
+        config_path: Option<PathBuf>,
+    },
 }
 
 impl From<Args> for application::Command {
@@ -29,6 +37,9 @@ impl From<Args> for application::Command {
             Command::Config {
                 command: ConfigCommand::Sample,
             } => Self::Config(application::ConfigCommand::Sample),
+            Command::Config {
+                command: ConfigCommand::Validate { config_path },
+            } => Self::Config(application::ConfigCommand::Validate { config_path }),
         }
     }
 }

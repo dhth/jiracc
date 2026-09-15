@@ -1,7 +1,9 @@
 mod config;
 mod sync;
 
-pub use config::SampleConfigError;
+use std::path::PathBuf;
+
+pub use config::{SampleConfigError, ValidateConfigError};
 pub use sync::IssueFetcher;
 pub use sync::sync;
 
@@ -11,17 +13,22 @@ pub enum Command {
 
 pub enum ConfigCommand {
     Sample,
+    Validate { config_path: Option<PathBuf> },
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum ApplicationError {
     #[error(transparent)]
     SampleConfig(#[from] SampleConfigError),
+
+    #[error(transparent)]
+    ValidateConfig(#[from] ValidateConfigError),
 }
 
 pub async fn run(command: Command) -> Result<(), ApplicationError> {
     match command {
         Command::Config(ConfigCommand::Sample) => config::sample()?,
+        Command::Config(ConfigCommand::Validate { config_path }) => config::validate(config_path)?,
     }
 
     Ok(())

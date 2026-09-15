@@ -16,5 +16,6 @@ fi
 "$HOME/.local/bin/mise" trust
 "$HOME/.local/bin/mise" install --locked \
     actionlint \
+    cargo-insta \
     rust \
     yamlfmt
