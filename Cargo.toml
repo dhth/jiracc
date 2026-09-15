@@ -5,9 +5,11 @@ edition = "2024"
 
 [dependencies]
 chrono = { version = "0.4.45", features = ["serde"] }
+reqwest = { version = "0.12.28", default-features = false, features = ["json", "rustls-tls"] }
 serde = { version = "1.0.229", features = ["derive"] }
 shellexpand = { version = "3.1.2", default-features = false, features = ["base-0"] }
 thiserror = "2.0.20"
+tokio = { version = "1.48.0", features = ["macros", "rt-multi-thread"] }
 toml = "1.1.6"
 url = "2.5.8"
 
