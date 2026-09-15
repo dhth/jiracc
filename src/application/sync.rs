@@ -11,3 +11,13 @@ pub trait IssueFetcher {
         jql: &JiraJql,
     ) -> impl Future<Output = Result<Vec<Issue>, Self::Error>> + Send;
 }
+
+pub async fn sync<F>(fetcher: &F, jql: &JiraJql) -> Result<(), F::Error>
+where
+    F: IssueFetcher,
+{
+    let issues = fetcher.fetch_issues(jql).await?;
+    println!("Fetched {} issues", issues.len());
+
+    Ok(())
+}

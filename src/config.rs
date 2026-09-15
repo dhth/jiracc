@@ -13,7 +13,7 @@ pub struct JiraConfig {
     pub jql: JiraJql,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct JiraUrl(String);
 
 impl JiraUrl {
@@ -22,6 +22,7 @@ impl JiraUrl {
     }
 }
 
+#[derive(Clone)]
 pub struct JiraToken(String);
 
 impl JiraToken {
