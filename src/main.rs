@@ -13,7 +13,7 @@ async fn main() -> ExitCode {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             let report = anyhow::Error::new(error);
-            eprintln!("{report:?}");
+            eprintln!("Error: {report:?}");
             ExitCode::FAILURE
         }
     }

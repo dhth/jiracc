@@ -4,6 +4,7 @@ task.run_auto_install = false
 
 [tools]
 actionlint = "latest"
+cargo-insta = "latest"
 yamlfmt = "latest"
 
 [tasks.all]
@@ -56,6 +57,16 @@ alias = "t"
 description = "Run all tests"
 raw_args = true
 run = "cargo test"
+
+[tasks."update-snapshots"]
+alias = "us"
+description = "Update test snapshots"
+run = "cargo insta test --accept"
+
+[tasks."review-snapshots"]
+alias = "rs"
+description = "Review pending test snapshots"
+run = "cargo insta review"
 
 [tasks."lint:actions"]
 description = "Lint GitHub Actions workflows"
