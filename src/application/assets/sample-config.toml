@@ -1,0 +1,15 @@
+# Configuration values can reference environment variables. Referenced
+# variables need to be set before running jiracc.
+
+[jira]
+# Base URL of your on-premise Jira Server or Data Center installation.
+url = "https://jira.example.com"
+
+# Personal access token used to authenticate with Jira.
+token = "$JIRACC_JIRA_TOKEN"
+
+# JQL that defines the issues jiracc synchronizes.
+jql = """
+project = EXAMPLE
+ORDER BY updated DESC
+"""
