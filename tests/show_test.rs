@@ -1,6 +1,6 @@
 mod common;
 
-use anyhow::{Context, Result, ensure};
+use anyhow::{Context, ensure};
 use common::Fixture;
 use insta_cmd::assert_cmd_snapshot;
 use std::path::PathBuf;
@@ -23,7 +23,7 @@ struct TestContext {
 }
 
 impl TestContext {
-    async fn new() -> Result<Self> {
+    async fn new() -> anyhow::Result<Self> {
         let fixture = Fixture::new();
         let server = MockServer::start().await;
         let temp_dir = tempfile::tempdir()?;
@@ -58,7 +58,7 @@ impl TestContext {
         command
     }
 
-    async fn seed_snapshot(&self) -> Result<()> {
+    async fn seed_snapshot(&self) -> anyhow::Result<()> {
         Mock::given(method("POST"))
             .and(path("/rest/api/2/search"))
             .respond_with(
@@ -80,7 +80,7 @@ impl TestContext {
         Ok(())
     }
 
-    fn snapshot_path(&self) -> Result<PathBuf> {
+    fn snapshot_path(&self) -> anyhow::Result<PathBuf> {
         let namespace_directory = self.data_home.join("jiracc").join("snapshots").join("v1");
         let mut namespaces = std::fs::read_dir(&namespace_directory)?;
         let namespace = namespaces
@@ -130,7 +130,7 @@ fn shows_help() {
 
 #[cfg(unix)]
 #[tokio::test]
-async fn shows_a_cached_issue_without_loading_the_config() -> Result<()> {
+async fn shows_a_cached_issue_without_loading_the_config() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context.seed_snapshot().await?;
@@ -164,7 +164,7 @@ async fn shows_a_cached_issue_without_loading_the_config() -> Result<()> {
 
 #[cfg(unix)]
 #[tokio::test]
-async fn reports_an_unknown_issue() -> Result<()> {
+async fn reports_an_unknown_issue() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context.seed_snapshot().await?;
@@ -186,7 +186,7 @@ async fn reports_an_unknown_issue() -> Result<()> {
 
 #[cfg(unix)]
 #[tokio::test]
-async fn reports_a_missing_snapshot() -> Result<()> {
+async fn reports_a_missing_snapshot() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     let mut cmd = context.show_command("TEST-1");
@@ -207,7 +207,7 @@ async fn reports_a_missing_snapshot() -> Result<()> {
 
 #[cfg(unix)]
 #[tokio::test]
-async fn reports_a_malformed_snapshot() -> Result<()> {
+async fn reports_a_malformed_snapshot() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context.seed_snapshot().await?;

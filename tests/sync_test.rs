@@ -1,6 +1,6 @@
 mod common;
 
-use anyhow::{Context, Result, bail, ensure};
+use anyhow::{Context, bail, ensure};
 use common::Fixture;
 use insta_cmd::assert_cmd_snapshot;
 use serde_json::json;
@@ -25,7 +25,7 @@ struct TestContext {
 }
 
 impl TestContext {
-    async fn new() -> Result<Self> {
+    async fn new() -> anyhow::Result<Self> {
         let fixture = Fixture::new();
         let server = MockServer::start().await;
         let temp_dir = tempfile::tempdir()?;
@@ -61,7 +61,7 @@ impl TestContext {
             .await;
     }
 
-    async fn seed_snapshot(&self) -> Result<()> {
+    async fn seed_snapshot(&self) -> anyhow::Result<()> {
         self.mount_search(search_response(TWO_ISSUE_SEARCH_RESPONSE))
             .await;
 
@@ -106,7 +106,7 @@ fn shows_help() {
 
 #[cfg(unix)]
 #[tokio::test]
-async fn synchronizes_issues_to_a_snapshot() -> Result<()> {
+async fn synchronizes_issues_to_a_snapshot() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context
@@ -135,7 +135,7 @@ async fn synchronizes_issues_to_a_snapshot() -> Result<()> {
 
 #[cfg(unix)]
 #[tokio::test]
-async fn an_empty_result_replaces_the_existing_snapshot() -> Result<()> {
+async fn an_empty_result_replaces_the_existing_snapshot() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context.seed_snapshot().await?;
@@ -165,7 +165,7 @@ async fn an_empty_result_replaces_the_existing_snapshot() -> Result<()> {
 
 #[cfg(unix)]
 #[tokio::test]
-async fn a_jira_failure_preserves_the_existing_snapshot() -> Result<()> {
+async fn a_jira_failure_preserves_the_existing_snapshot() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context.seed_snapshot().await?;
@@ -212,7 +212,7 @@ jql = """
     )
 }
 
-fn assert_data_directory_snapshot(name: &str, data_home: &Path) -> Result<()> {
+fn assert_data_directory_snapshot(name: &str, data_home: &Path) -> anyhow::Result<()> {
     let tree = render_directory_tree(data_home)?;
     insta::with_settings!({
         filters => vec![
@@ -230,7 +230,7 @@ fn assert_data_directory_snapshot(name: &str, data_home: &Path) -> Result<()> {
     Ok(())
 }
 
-fn render_directory_tree(root: &Path) -> Result<String> {
+fn render_directory_tree(root: &Path) -> anyhow::Result<String> {
     let mut tree = String::new();
     let mut files = Vec::new();
     render_directory(root, root, 0, &mut tree, &mut files)?;
@@ -252,7 +252,7 @@ fn render_directory(
     depth: usize,
     tree: &mut String,
     files: &mut Vec<(String, String)>,
-) -> Result<()> {
+) -> anyhow::Result<()> {
     let mut entries = std::fs::read_dir(directory)
         .with_context(|| format!("couldn't read directory at {directory:?}"))?
         .collect::<std::io::Result<Vec<_>>>()?;

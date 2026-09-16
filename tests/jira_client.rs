@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, bail};
 use jiracc::application::IssueFetcher;
 use jiracc::config::{JiraJql, JiraToken, JiraUrl};
 use jiracc::jira::{JiraClient, JiraClientError};
@@ -18,7 +18,7 @@ struct TestContext {
 }
 
 impl TestContext {
-    async fn new() -> Result<Self> {
+    async fn new() -> anyhow::Result<Self> {
         let server = MockServer::start().await;
         let url = JiraUrl::try_from(server.uri())?;
         let token = JiraToken::try_from(TOKEN.to_owned())?;
@@ -50,7 +50,7 @@ impl TestContext {
 //-------------//
 
 #[tokio::test]
-async fn fetches_and_normalizes_a_single_page() -> Result<()> {
+async fn fetches_and_normalizes_a_single_page() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context
@@ -99,7 +99,7 @@ async fn fetches_and_normalizes_a_single_page() -> Result<()> {
 }
 
 #[tokio::test]
-async fn fetches_all_pages_using_the_page_size_returned_by_jira() -> Result<()> {
+async fn fetches_all_pages_using_the_page_size_returned_by_jira() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context
@@ -144,7 +144,7 @@ async fn fetches_all_pages_using_the_page_size_returned_by_jira() -> Result<()> 
 }
 
 #[tokio::test]
-async fn an_empty_result_set_returns_no_issues() -> Result<()> {
+async fn an_empty_result_set_returns_no_issues() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context
@@ -165,7 +165,7 @@ async fn an_empty_result_set_returns_no_issues() -> Result<()> {
 }
 
 #[tokio::test]
-async fn continues_after_an_empty_intermediate_page() -> Result<()> {
+async fn continues_after_an_empty_intermediate_page() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context
@@ -217,7 +217,7 @@ async fn continues_after_an_empty_intermediate_page() -> Result<()> {
 }
 
 #[tokio::test]
-async fn follows_an_increasing_total() -> Result<()> {
+async fn follows_an_increasing_total() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context
@@ -280,7 +280,7 @@ async fn follows_an_increasing_total() -> Result<()> {
 }
 
 #[tokio::test]
-async fn stops_after_a_decreasing_total() -> Result<()> {
+async fn stops_after_a_decreasing_total() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context
@@ -329,7 +329,7 @@ async fn stops_after_a_decreasing_total() -> Result<()> {
 //------------//
 
 #[tokio::test]
-async fn an_http_failure_on_a_later_page_returns_an_error() -> Result<()> {
+async fn an_http_failure_on_a_later_page_returns_an_error() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context
@@ -366,7 +366,7 @@ async fn an_http_failure_on_a_later_page_returns_an_error() -> Result<()> {
 }
 
 #[tokio::test]
-async fn an_unexpected_response_shape_on_a_later_page_returns_an_error() -> Result<()> {
+async fn an_unexpected_response_shape_on_a_later_page_returns_an_error() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context
@@ -409,7 +409,7 @@ async fn an_unexpected_response_shape_on_a_later_page_returns_an_error() -> Resu
 }
 
 #[tokio::test]
-async fn invalid_json_on_a_later_page_returns_an_error() -> Result<()> {
+async fn invalid_json_on_a_later_page_returns_an_error() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context
@@ -445,7 +445,7 @@ async fn invalid_json_on_a_later_page_returns_an_error() -> Result<()> {
 }
 
 #[tokio::test]
-async fn an_unexpected_page_start_returns_an_error() -> Result<()> {
+async fn an_unexpected_page_start_returns_an_error() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context
@@ -472,7 +472,7 @@ async fn an_unexpected_page_start_returns_an_error() -> Result<()> {
 }
 
 #[tokio::test]
-async fn a_zero_page_size_with_results_remaining_returns_an_error() -> Result<()> {
+async fn a_zero_page_size_with_results_remaining_returns_an_error() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context
