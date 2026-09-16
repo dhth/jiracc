@@ -1,0 +1,54 @@
+{
+  "startAt": 0,
+  "maxResults": 100,
+  "total": 2,
+  "issues": [
+    {
+      "id": "10001",
+      "key": "TEST-1",
+      "fields": {
+        "summary": "Example issue",
+        "status": {
+          "name": "In Progress"
+        },
+        "issuetype": {
+          "name": "Task"
+        },
+        "assignee": {
+          "name": "alice",
+          "displayName": "Alice Example"
+        },
+        "description": "Example description",
+        "updated": "2026-09-15T10:00:00.000+0000",
+        "parent": {
+          "id": "10000",
+          "key": "TEST-0"
+        },
+        "subtasks": [
+          {
+            "id": "10002",
+            "key": "TEST-2"
+          }
+        ]
+      }
+    },
+    {
+      "id": "10003",
+      "key": "TEST-3",
+      "fields": {
+        "summary": "Unassigned issue",
+        "status": {
+          "name": "Open"
+        },
+        "issuetype": {
+          "name": "Bug"
+        },
+        "assignee": null,
+        "description": null,
+        "updated": "2026-09-16T14:30:00.000+0000",
+        "parent": null,
+        "subtasks": []
+      }
+    }
+  ]
+}

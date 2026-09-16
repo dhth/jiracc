@@ -11,24 +11,24 @@ pub enum InitConfigError {
     #[error(transparent)]
     Paths(#[from] paths::PathsError),
 
-    #[error("couldn't create configuration directory at {path}")]
+    #[error("couldn't create configuration directory at {path:?}")]
     CreateDirectory {
         path: PathBuf,
         #[source]
         source: std::io::Error,
     },
 
-    #[error("configuration already exists at {path}")]
+    #[error("configuration already exists at {path:?}")]
     AlreadyExists { path: PathBuf },
 
-    #[error("couldn't create configuration at {path}")]
+    #[error("couldn't create configuration at {path:?}")]
     Create {
         path: PathBuf,
         #[source]
         source: std::io::Error,
     },
 
-    #[error("couldn't write configuration at {path}")]
+    #[error("couldn't write configuration at {path:?}")]
     WriteConfig {
         path: PathBuf,
         #[source]

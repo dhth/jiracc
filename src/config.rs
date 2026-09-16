@@ -2,6 +2,21 @@ use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
+pub struct LoadedConfig {
+    pub config: Config,
+    pub path: CanonicalConfigPath,
+}
+
+#[derive(Debug)]
+pub struct CanonicalConfigPath(String);
+
+impl CanonicalConfigPath {
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+#[derive(Debug)]
 pub struct Config {
     pub jira: JiraConfig,
 }
@@ -48,14 +63,24 @@ impl JiraJql {
 
 #[derive(Debug, thiserror::Error)]
 pub enum ConfigError {
-    #[error("failed to read configuration from {path}")]
+    #[error("couldn't resolve path {path:?}")]
+    ResolvePath {
+        path: PathBuf,
+        #[source]
+        source: std::io::Error,
+    },
+
+    #[error("canonical path {path:?} is not valid UTF-8")]
+    NonUtf8Path { path: PathBuf },
+
+    #[error("couldn't read contents from {path:?}")]
     Read {
         path: PathBuf,
         #[source]
         source: std::io::Error,
     },
 
-    #[error("failed to parse configuration")]
+    #[error("couldn't parse configuration")]
     Parse(#[source] toml::de::Error),
 
     #[error("environment variable {variable} referenced by {field} is unavailable")]
@@ -94,13 +119,25 @@ struct JiraConfigFile {
     jql: String,
 }
 
-pub fn load(path: &Path) -> Result<Config, ConfigError> {
-    let contents = std::fs::read_to_string(path).map_err(|source| ConfigError::Read {
-        path: path.to_path_buf(),
+pub fn load(path: &Path) -> Result<LoadedConfig, ConfigError> {
+    let path = {
+        let path = std::fs::canonicalize(path).map_err(|source| ConfigError::ResolvePath {
+            path: path.to_path_buf(),
+            source,
+        })?;
+        let path = path
+            .to_str()
+            .ok_or_else(|| ConfigError::NonUtf8Path { path: path.clone() })?;
+
+        CanonicalConfigPath(path.to_owned())
+    };
+    let contents = std::fs::read_to_string(path.as_str()).map_err(|source| ConfigError::Read {
+        path: PathBuf::from(path.as_str()),
         source,
     })?;
+    let config = parse(&contents, |variable| std::env::var(variable).map(Some))?;
 
-    parse(&contents, |variable| std::env::var(variable).map(Some))
+    Ok(LoadedConfig { config, path })
 }
 
 fn parse(

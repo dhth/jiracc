@@ -1,0 +1,19 @@
+---
+source: tests/sync_test.rs
+expression: tree
+---
+jiracc/
+  snapshots/
+    v1/
+      [namespace]/
+        snapshot.json
+
+--- jiracc/snapshots/v1/[namespace]/snapshot.json ---
+{
+  "metadata": {
+    "fetched_at": "[timestamp]",
+    "jira_url": "[mock-server-url]",
+    "jql": "project = TEST\nORDER BY updated DESC\n"
+  },
+  "issues": []
+}
