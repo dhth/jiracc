@@ -23,6 +23,17 @@ enum Command {
         #[arg(long, value_name = "PATH")]
         config_path: Option<PathBuf>,
     },
+
+    /// Show the cached details of an issue
+    Show {
+        /// Jira issue key
+        #[arg(value_name = "ISSUE-KEY")]
+        key: String,
+
+        /// Path to the configuration file
+        #[arg(long, value_name = "PATH")]
+        config_path: Option<PathBuf>,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -54,6 +65,7 @@ impl From<Args> for application::Command {
                 command: ConfigCommand::Validate { config_path },
             } => Self::Config(application::ConfigCommand::Validate { config_path }),
             Command::Sync { config_path } => Self::Sync { config_path },
+            Command::Show { key, config_path } => Self::Show { key, config_path },
         }
     }
 }
