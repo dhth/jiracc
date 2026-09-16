@@ -1,14 +1,16 @@
 mod config;
+mod store;
 mod sync;
 
 use std::path::PathBuf;
 
 pub use config::{InitConfigError, SampleConfigError, ValidateConfigError};
-pub use sync::IssueFetcher;
-pub use sync::sync;
+pub use store::SnapshotStore;
+pub use sync::{IssueFetcher, SyncError, SyncOperationError, sync};
 
 pub enum Command {
     Config(ConfigCommand),
+    Sync { config_path: Option<PathBuf> },
 }
 
 pub enum ConfigCommand {
@@ -27,6 +29,9 @@ pub enum ApplicationError {
 
     #[error(transparent)]
     ValidateConfig(#[from] ValidateConfigError),
+
+    #[error(transparent)]
+    Sync(#[from] SyncError),
 }
 
 pub async fn run(command: Command) -> Result<(), ApplicationError> {
@@ -34,6 +39,7 @@ pub async fn run(command: Command) -> Result<(), ApplicationError> {
         Command::Config(ConfigCommand::Init) => config::init()?,
         Command::Config(ConfigCommand::Sample) => config::sample()?,
         Command::Config(ConfigCommand::Validate { config_path }) => config::validate(config_path)?,
+        Command::Sync { config_path } => sync::sync(config_path).await?,
     }
 
     Ok(())

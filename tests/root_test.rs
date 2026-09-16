@@ -11,7 +11,7 @@ fn shows_help() {
 
     // WHEN
     // THEN
-    assert_cmd_snapshot!(cmd, @r"
+    assert_cmd_snapshot!(cmd, @"
     success: true
     exit_code: 0
     ----- stdout -----
@@ -21,6 +21,7 @@ fn shows_help() {
 
     Commands:
       config  Work with jiracc's configuration
+      sync    Synchronize issues from Jira
       help    Print this message or the help of the given subcommand(s)
 
     Options:

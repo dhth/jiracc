@@ -84,10 +84,7 @@ fn refuses_to_overwrite_existing_configuration() -> anyhow::Result<()> {
     assert!(output.stdout.is_empty());
     assert_eq!(
         String::from_utf8(output.stderr)?,
-        format!(
-            "Error: configuration already exists at {}\n",
-            config_path.display()
-        )
+        format!("Error: configuration already exists at {config_path:?}\n")
     );
     assert_eq!(std::fs::read(config_path)?, original_contents);
 

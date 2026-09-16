@@ -11,4 +11,6 @@ pub struct Snapshot {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SnapshotMetadata {
     pub fetched_at: DateTime<Utc>,
+    pub jira_url: String,
+    pub jql: String,
 }

@@ -77,7 +77,7 @@ fn reports_a_missing_config_file() {
 
     // WHEN
     // THEN
-    assert_cmd_snapshot!(cmd, @"
+    assert_cmd_snapshot!(cmd, @r#"
     success: false
     exit_code: 1
     ----- stdout -----
@@ -86,9 +86,9 @@ fn reports_a_missing_config_file() {
     Error: configuration is invalid
 
     Caused by:
-        0: failed to read configuration from missing.toml
+        0: couldn't resolve path "missing.toml"
         1: No such file or directory (os error 2)
-    ");
+    "#);
 }
 
 #[test]
@@ -110,7 +110,7 @@ fn reports_invalid_toml() {
     Error: configuration is invalid
 
     Caused by:
-        0: failed to parse configuration
+        0: couldn't parse configuration
         1: TOML parse error at line 4, column 22
              |
            4 | jql = "project = TEST

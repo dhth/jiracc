@@ -16,6 +16,13 @@ enum Command {
         #[command(subcommand)]
         command: ConfigCommand,
     },
+
+    /// Synchronize issues from Jira
+    Sync {
+        /// Path to the configuration file
+        #[arg(long, value_name = "PATH")]
+        config_path: Option<PathBuf>,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -46,6 +53,7 @@ impl From<Args> for application::Command {
             Command::Config {
                 command: ConfigCommand::Validate { config_path },
             } => Self::Config(application::ConfigCommand::Validate { config_path }),
+            Command::Sync { config_path } => Self::Sync { config_path },
         }
     }
 }
