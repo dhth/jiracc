@@ -120,17 +120,7 @@ struct JiraConfigFile {
 }
 
 pub fn load(path: &Path) -> Result<LoadedConfig, ConfigError> {
-    let path = {
-        let path = std::fs::canonicalize(path).map_err(|source| ConfigError::ResolvePath {
-            path: path.to_path_buf(),
-            source,
-        })?;
-        let path = path
-            .to_str()
-            .ok_or_else(|| ConfigError::NonUtf8Path { path: path.clone() })?;
-
-        CanonicalConfigPath(path.to_owned())
-    };
+    let path = resolve_path(path)?;
     let contents = std::fs::read_to_string(path.as_str()).map_err(|source| ConfigError::Read {
         path: PathBuf::from(path.as_str()),
         source,
@@ -138,6 +128,18 @@ pub fn load(path: &Path) -> Result<LoadedConfig, ConfigError> {
     let config = parse(&contents, |variable| std::env::var(variable).map(Some))?;
 
     Ok(LoadedConfig { config, path })
+}
+
+pub fn resolve_path(path: &Path) -> Result<CanonicalConfigPath, ConfigError> {
+    let path = std::fs::canonicalize(path).map_err(|source| ConfigError::ResolvePath {
+        path: path.to_path_buf(),
+        source,
+    })?;
+    let path = path
+        .to_str()
+        .ok_or_else(|| ConfigError::NonUtf8Path { path: path.clone() })?;
+
+    Ok(CanonicalConfigPath(path.to_owned()))
 }
 
 fn parse(

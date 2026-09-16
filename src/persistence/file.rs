@@ -1,6 +1,6 @@
 use crate::application::SnapshotStore;
 use crate::config::CanonicalConfigPath;
-use crate::domain::Snapshot;
+use crate::domain::{Issue, Snapshot};
 use sha2::{Digest, Sha256};
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -16,6 +16,23 @@ pub struct FileSnapshotStore {
 pub enum FileSnapshotStoreError {
     #[error("couldn't serialize snapshot")]
     Serialize(#[source] serde_json::Error),
+
+    #[error("no snapshot exists at {path:?}")]
+    SnapshotNotFound { path: PathBuf },
+
+    #[error("couldn't read snapshot at {path:?}")]
+    ReadSnapshot {
+        path: PathBuf,
+        #[source]
+        source: std::io::Error,
+    },
+
+    #[error("couldn't deserialize snapshot at {path:?}")]
+    DeserializeSnapshot {
+        path: PathBuf,
+        #[source]
+        source: serde_json::Error,
+    },
 
     #[error("couldn't create snapshot directory at {path:?}")]
     CreateDirectory {
@@ -68,6 +85,30 @@ impl SnapshotStore for FileSnapshotStore {
             serde_json::to_vec_pretty(snapshot).map_err(FileSnapshotStoreError::Serialize)?;
 
         save_snapshot(&self.namespace_directory, &serialized_snapshot)
+    }
+
+    fn get_issue(&self, key: &str) -> Result<Option<Issue>, Self::Error> {
+        let snapshot_path = self.namespace_directory.join(SNAPSHOT_FILE);
+        let contents = std::fs::read(&snapshot_path).map_err(|source| {
+            if source.kind() == std::io::ErrorKind::NotFound {
+                FileSnapshotStoreError::SnapshotNotFound {
+                    path: snapshot_path.clone(),
+                }
+            } else {
+                FileSnapshotStoreError::ReadSnapshot {
+                    path: snapshot_path.clone(),
+                    source,
+                }
+            }
+        })?;
+        let snapshot = serde_json::from_slice::<Snapshot>(&contents).map_err(|source| {
+            FileSnapshotStoreError::DeserializeSnapshot {
+                path: snapshot_path,
+                source,
+            }
+        })?;
+
+        Ok(snapshot.issues.into_iter().find(|issue| issue.key == key))
     }
 }
 
