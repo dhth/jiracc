@@ -20,6 +20,9 @@ enum Command {
 
 #[derive(Debug, Subcommand)]
 enum ConfigCommand {
+    /// Create a sample configuration at the default path
+    Init,
+
     /// Print a sample configuration to stdout
     Sample,
 
@@ -34,6 +37,9 @@ enum ConfigCommand {
 impl From<Args> for application::Command {
     fn from(args: Args) -> Self {
         match args.command {
+            Command::Config {
+                command: ConfigCommand::Init,
+            } => Self::Config(application::ConfigCommand::Init),
             Command::Config {
                 command: ConfigCommand::Sample,
             } => Self::Config(application::ConfigCommand::Sample),
