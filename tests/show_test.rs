@@ -121,7 +121,7 @@ fn shows_help() {
       <ISSUE-KEY>  Jira issue key
 
     Options:
-          --config-path <PATH>  Path to the configuration file
+      -p, --config-path <PATH>  Path to the configuration file
       -h, --help                Print help
 
     ----- stderr -----

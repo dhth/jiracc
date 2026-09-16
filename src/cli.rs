@@ -20,7 +20,7 @@ enum Command {
     /// Synchronize issues from Jira
     Sync {
         /// Path to the configuration file
-        #[arg(long, value_name = "PATH")]
+        #[arg(short = 'p', long, value_name = "PATH")]
         config_path: Option<PathBuf>,
     },
 
@@ -31,7 +31,7 @@ enum Command {
         key: String,
 
         /// Path to the configuration file
-        #[arg(long, value_name = "PATH")]
+        #[arg(short = 'p', long, value_name = "PATH")]
         config_path: Option<PathBuf>,
     },
 }
@@ -47,7 +47,7 @@ enum ConfigCommand {
     /// Validate a configuration file
     Validate {
         /// Path to the configuration file
-        #[arg(long, value_name = "PATH")]
+        #[arg(short = 'p', long, value_name = "PATH")]
         config_path: Option<PathBuf>,
     },
 }

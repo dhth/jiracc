@@ -10,7 +10,7 @@ fn shows_help() {
 
     // WHEN
     // THEN
-    assert_cmd_snapshot!(cmd, @r"
+    assert_cmd_snapshot!(cmd, @"
     success: true
     exit_code: 0
     ----- stdout -----
@@ -19,7 +19,7 @@ fn shows_help() {
     Usage: jiracc config validate [OPTIONS]
 
     Options:
-          --config-path <PATH>  Path to the configuration file
+      -p, --config-path <PATH>  Path to the configuration file
       -h, --help                Print help
 
     ----- stderr -----

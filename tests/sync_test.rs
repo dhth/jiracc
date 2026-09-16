@@ -97,7 +97,7 @@ fn shows_help() {
     Usage: jiracc sync [OPTIONS]
 
     Options:
-          --config-path <PATH>  Path to the configuration file
+      -p, --config-path <PATH>  Path to the configuration file
       -h, --help                Print help
 
     ----- stderr -----
