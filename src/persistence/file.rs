@@ -17,8 +17,8 @@ pub enum FileSnapshotStoreError {
     #[error("couldn't serialize snapshot")]
     Serialize(#[source] serde_json::Error),
 
-    #[error("no snapshot exists at {path:?}")]
-    SnapshotNotFound { path: PathBuf },
+    #[error("no cached snapshot exists for this configuration")]
+    SnapshotNotFound,
 
     #[error("couldn't read snapshot at {path:?}")]
     ReadSnapshot {
@@ -91,9 +91,7 @@ impl SnapshotStore for FileSnapshotStore {
         let snapshot_path = self.namespace_directory.join(SNAPSHOT_FILE);
         let contents = std::fs::read(&snapshot_path).map_err(|source| {
             if source.kind() == std::io::ErrorKind::NotFound {
-                FileSnapshotStoreError::SnapshotNotFound {
-                    path: snapshot_path.clone(),
-                }
+                FileSnapshotStoreError::SnapshotNotFound
             } else {
                 FileSnapshotStoreError::ReadSnapshot {
                     path: snapshot_path.clone(),
