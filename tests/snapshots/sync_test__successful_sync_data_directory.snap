@@ -1,0 +1,55 @@
+---
+source: tests/sync_test.rs
+expression: tree
+---
+jiracc/
+  snapshots/
+    v1/
+      [namespace]/
+        snapshot.json
+
+--- jiracc/snapshots/v1/[namespace]/snapshot.json ---
+{
+  "metadata": {
+    "fetched_at": "[timestamp]",
+    "jira_url": "[mock-server-url]",
+    "jql": "project = TEST\nORDER BY updated DESC\n"
+  },
+  "issues": [
+    {
+      "id": "10001",
+      "key": "TEST-1",
+      "summary": "Example issue",
+      "status": "In Progress",
+      "issue_type": "Task",
+      "assignee": {
+        "username": "alice",
+        "display_name": "Alice Example"
+      },
+      "description": "Example description",
+      "updated_at": "2026-09-15T10:00:00.000+0000",
+      "parent": {
+        "id": "10000",
+        "key": "TEST-0"
+      },
+      "subtasks": [
+        {
+          "id": "10002",
+          "key": "TEST-2"
+        }
+      ]
+    },
+    {
+      "id": "10003",
+      "key": "TEST-3",
+      "summary": "Unassigned issue",
+      "status": "Open",
+      "issue_type": "Bug",
+      "assignee": null,
+      "description": null,
+      "updated_at": "2026-09-16T14:30:00.000+0000",
+      "parent": null,
+      "subtasks": []
+    }
+  ]
+}
