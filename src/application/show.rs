@@ -33,8 +33,8 @@ pub fn show(key: String, config_path: Option<PathBuf>) -> Result<(), ShowError> 
         .get_issue(&key)?
         .ok_or_else(|| ShowError::IssueNotFound { key })?;
 
-    let mut stdout = std::io::stdout().lock();
     let output = format_issue(&issue);
+    let mut stdout = std::io::stdout().lock();
     writeln!(stdout, "{output}").map_err(ShowError::WriteOutput)
 }
 
