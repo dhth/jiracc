@@ -93,7 +93,9 @@ pub fn init() -> Result<(), InitConfigError> {
 
     writeln!(
         std::io::stdout().lock(),
-        "Created sample configuration at {}",
+        "Created sample configuration at {}.
+
+Edit it to match your Jira setup.",
         config_path.display()
     )
     .map_err(InitConfigError::WriteOutput)

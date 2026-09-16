@@ -49,7 +49,9 @@ fn creates_sample_config_at_default_path() -> anyhow::Result<()> {
     assert_eq!(
         String::from_utf8(output.stdout)?,
         format!(
-            "Created sample configuration at {}\n",
+            "Created sample configuration at {}.
+
+Edit it to match your Jira setup.\n",
             config_path.display()
         )
     );
