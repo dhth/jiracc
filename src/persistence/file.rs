@@ -87,7 +87,7 @@ impl SnapshotStore for FileSnapshotStore {
         save_snapshot(&self.namespace_directory, &serialized_snapshot)
     }
 
-    fn get_issue(&self, key: &str) -> Result<Option<Issue>, Self::Error> {
+    fn get_snapshot(&self) -> Result<Snapshot, Self::Error> {
         let snapshot_path = self.namespace_directory.join(SNAPSHOT_FILE);
         let contents = std::fs::read(&snapshot_path).map_err(|source| {
             if source.kind() == std::io::ErrorKind::NotFound {
@@ -106,7 +106,15 @@ impl SnapshotStore for FileSnapshotStore {
             }
         })?;
 
-        Ok(snapshot.issues.into_iter().find(|issue| issue.key == key))
+        Ok(snapshot)
+    }
+
+    fn get_issue(&self, key: &str) -> Result<Option<Issue>, Self::Error> {
+        Ok(self
+            .get_snapshot()?
+            .issues
+            .into_iter()
+            .find(|issue| issue.key == key))
     }
 }
 

@@ -6,5 +6,7 @@ pub trait SnapshotStore {
 
     fn save_snapshot(&self, snapshot: &Snapshot) -> Result<(), Self::Error>;
 
+    fn get_snapshot(&self) -> Result<Snapshot, Self::Error>;
+
     fn get_issue(&self, key: &str) -> Result<Option<Issue>, Self::Error>;
 }
