@@ -1,4 +1,4 @@
-use crate::domain::{Issue, Snapshot};
+use crate::domain::Snapshot;
 use std::error::Error;
 
 pub trait SnapshotStore {
@@ -6,5 +6,5 @@ pub trait SnapshotStore {
 
     fn save_snapshot(&self, snapshot: &Snapshot) -> Result<(), Self::Error>;
 
-    fn get_issue(&self, key: &str) -> Result<Option<Issue>, Self::Error>;
+    fn get_snapshot(&self) -> Result<Snapshot, Self::Error>;
 }
