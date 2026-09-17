@@ -1,6 +1,7 @@
 mod config;
 mod issue_filter;
 mod issue_formatter;
+mod search;
 mod show;
 mod store;
 mod sync;
@@ -9,6 +10,7 @@ use std::path::PathBuf;
 
 pub use config::{InitConfigError, SampleConfigError, ValidateConfigError};
 pub use issue_filter::{IssueFilter, IssueFilterError};
+pub use search::{SearchError, SearchOperationError};
 pub use show::ShowError;
 pub use store::SnapshotStore;
 pub use sync::{IssueFetcher, SyncError, SyncOperationError, sync};
@@ -20,6 +22,13 @@ pub enum Command {
     },
     Show {
         key: String,
+        config_path: Option<PathBuf>,
+    },
+    Search {
+        query: Option<String>,
+        assignees: Vec<String>,
+        statuses: Vec<String>,
+        issue_types: Vec<String>,
         config_path: Option<PathBuf>,
     },
 }
@@ -46,6 +55,9 @@ pub enum ApplicationError {
 
     #[error(transparent)]
     Show(#[from] ShowError),
+
+    #[error(transparent)]
+    Search(#[from] SearchError),
 }
 
 pub async fn run(command: Command) -> Result<(), ApplicationError> {
@@ -55,6 +67,13 @@ pub async fn run(command: Command) -> Result<(), ApplicationError> {
         Command::Config(ConfigCommand::Validate { config_path }) => config::validate(config_path)?,
         Command::Sync { config_path } => sync::sync(config_path).await?,
         Command::Show { key, config_path } => show::show(key, config_path)?,
+        Command::Search {
+            query,
+            assignees,
+            statuses,
+            issue_types,
+            config_path,
+        } => search::search(query, assignees, statuses, issue_types, config_path)?,
     }
 
     Ok(())

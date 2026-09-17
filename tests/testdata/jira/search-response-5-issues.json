@@ -1,0 +1,120 @@
+{
+  "startAt": 0,
+  "maxResults": 100,
+  "total": 5,
+  "issues": [
+    {
+      "id": "10001",
+      "key": "TEST-1",
+      "fields": {
+        "summary": "Investigate connection timeout",
+        "status": {
+          "name": "Open"
+        },
+        "issuetype": {
+          "name": "Bug"
+        },
+        "assignee": {
+          "name": "alice",
+          "displayName": "Alice Example"
+        },
+        "description": "Connections fail after reconnecting to the VPN.",
+        "updated": "2026-09-15T10:00:00.000+0000",
+        "parent": {
+          "id": "10000",
+          "key": "TEST-0"
+        },
+        "subtasks": [
+          {
+            "id": "10002",
+            "key": "TEST-2"
+          }
+        ]
+      }
+    },
+    {
+      "id": "10003",
+      "key": "TEST-3",
+      "fields": {
+        "summary": "Retry synchronization failures",
+        "status": {
+          "name": "Open"
+        },
+        "issuetype": {
+          "name": "Bug"
+        },
+        "assignee": {
+          "name": "alice",
+          "displayName": "Alice Example"
+        },
+        "description": "Retry after a connection timeout.",
+        "updated": "2026-09-16T14:30:00.000+0000",
+        "parent": null,
+        "subtasks": []
+      }
+    },
+    {
+      "id": "10004",
+      "key": "TEST-4",
+      "fields": {
+        "summary": "Diagnose connection pool exhaustion",
+        "status": {
+          "name": "Open"
+        },
+        "issuetype": {
+          "name": "Bug"
+        },
+        "assignee": {
+          "name": "charlie",
+          "displayName": "Charlie Example"
+        },
+        "description": "The pool remains saturated after traffic spikes.",
+        "updated": "2026-09-14T08:00:00.000+0000",
+        "parent": null,
+        "subtasks": []
+      }
+    },
+    {
+      "id": "10005",
+      "key": "TEST-5",
+      "fields": {
+        "summary": "Document connection recovery",
+        "status": {
+          "name": "Done"
+        },
+        "issuetype": {
+          "name": "Bug"
+        },
+        "assignee": {
+          "name": "alice",
+          "displayName": "Alice Example"
+        },
+        "description": "Capture the recovery steps in the operations guide.",
+        "updated": "2026-09-13T09:00:00.000+0000",
+        "parent": null,
+        "subtasks": []
+      }
+    },
+    {
+      "id": "10006",
+      "key": "TEST-6",
+      "fields": {
+        "summary": "Improve VPN error reporting",
+        "status": {
+          "name": "In Progress"
+        },
+        "issuetype": {
+          "name": "Story"
+        },
+        "assignee": {
+          "name": "bob",
+          "displayName": "Bob Example"
+        },
+        "description": "Show clearer errors when VPN connectivity is lost.",
+        "updated": "2026-09-12T08:00:00.000+0000",
+        "parent": null,
+        "subtasks": []
+      }
+    }
+  ]
+}
