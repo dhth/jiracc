@@ -1,4 +1,5 @@
 mod config;
+mod issue_filter;
 mod show;
 mod store;
 mod sync;
@@ -6,6 +7,7 @@ mod sync;
 use std::path::PathBuf;
 
 pub use config::{InitConfigError, SampleConfigError, ValidateConfigError};
+pub use issue_filter::{IssueFilter, IssueFilterError};
 pub use show::ShowError;
 pub use store::SnapshotStore;
 pub use sync::{IssueFetcher, SyncError, SyncOperationError, sync};
