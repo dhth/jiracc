@@ -30,7 +30,10 @@ pub fn show(key: String, config_path: Option<PathBuf>) -> Result<(), ShowError> 
     let config_path = config::resolve_path(&config_path)?;
     let store = FileSnapshotStore::new(&paths.data, &config_path);
     let issue = store
-        .get_issue(&key)?
+        .get_snapshot()?
+        .issues
+        .into_iter()
+        .find(|issue| issue.key == key)
         .ok_or_else(|| ShowError::IssueNotFound { key })?;
 
     let output = format_issue(&issue);

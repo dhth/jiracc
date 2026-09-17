@@ -1,6 +1,6 @@
 use crate::application::SnapshotStore;
 use crate::config::CanonicalConfigPath;
-use crate::domain::{Issue, Snapshot};
+use crate::domain::Snapshot;
 use sha2::{Digest, Sha256};
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -107,14 +107,6 @@ impl SnapshotStore for FileSnapshotStore {
         })?;
 
         Ok(snapshot)
-    }
-
-    fn get_issue(&self, key: &str) -> Result<Option<Issue>, Self::Error> {
-        Ok(self
-            .get_snapshot()?
-            .issues
-            .into_iter()
-            .find(|issue| issue.key == key))
     }
 }
 
