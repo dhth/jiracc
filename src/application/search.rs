@@ -122,7 +122,6 @@ mod tests {
     use super::*;
     use crate::domain::Assignee;
     use insta::assert_snapshot;
-    use std::io::ErrorKind;
 
     //-------------//
     //  SUCCESSES  //
@@ -223,7 +222,7 @@ mod tests {
             .expect_err("the underlying writer should fail");
 
         // THEN
-        assert_eq!(error.kind(), ErrorKind::BrokenPipe);
+        assert_eq!(error.kind(), std::io::ErrorKind::BrokenPipe);
     }
 
     fn issue(
@@ -254,7 +253,10 @@ mod tests {
 
     impl Write for FailingWriter {
         fn write(&mut self, _buffer: &[u8]) -> std::io::Result<usize> {
-            Err(std::io::Error::new(ErrorKind::BrokenPipe, "write failed"))
+            Err(std::io::Error::new(
+                std::io::ErrorKind::BrokenPipe,
+                "write failed",
+            ))
         }
 
         fn flush(&mut self) -> std::io::Result<()> {
