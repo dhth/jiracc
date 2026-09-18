@@ -1,6 +1,5 @@
 mod config;
 mod issue_filter;
-mod issue_formatter;
 mod search;
 mod show;
 mod store;
