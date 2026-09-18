@@ -1,4 +1,3 @@
-use crate::application::SnapshotStore;
 use crate::config::CanonicalConfigPath;
 use crate::domain::Snapshot;
 use sha2::{Digest, Sha256};
@@ -75,19 +74,15 @@ impl FileSnapshotStore {
             namespace_directory,
         }
     }
-}
 
-impl SnapshotStore for FileSnapshotStore {
-    type Error = FileSnapshotStoreError;
-
-    fn save_snapshot(&self, snapshot: &Snapshot) -> Result<(), Self::Error> {
+    pub fn save_snapshot(&self, snapshot: &Snapshot) -> Result<(), FileSnapshotStoreError> {
         let serialized_snapshot =
             serde_json::to_vec_pretty(snapshot).map_err(FileSnapshotStoreError::Serialize)?;
 
         save_snapshot(&self.namespace_directory, &serialized_snapshot)
     }
 
-    fn get_snapshot(&self) -> Result<Snapshot, Self::Error> {
+    pub fn get_snapshot(&self) -> Result<Snapshot, FileSnapshotStoreError> {
         let snapshot_path = self.namespace_directory.join(SNAPSHOT_FILE);
         let contents = std::fs::read(&snapshot_path).map_err(|source| {
             if source.kind() == std::io::ErrorKind::NotFound {

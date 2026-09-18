@@ -2,7 +2,6 @@ mod config;
 mod issue_filter;
 mod search;
 mod show;
-mod store;
 mod sync;
 
 use std::path::PathBuf;
@@ -11,8 +10,7 @@ pub use config::{InitConfigError, SampleConfigError, ValidateConfigError};
 pub use issue_filter::{IssueFilter, IssueFilterError};
 pub use search::{SearchError, SearchOperationError};
 pub use show::ShowError;
-pub use store::SnapshotStore;
-pub use sync::{IssueFetcher, SyncError, SyncOperationError, sync};
+pub use sync::{SyncError, SyncOperationError, sync};
 
 pub enum Command {
     Config(ConfigCommand),

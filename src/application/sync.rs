@@ -1,23 +1,11 @@
-use crate::application::SnapshotStore;
 use crate::config::{self, JiraJql, JiraUrl};
-use crate::domain::{Issue, Snapshot, SnapshotMetadata};
+use crate::domain::{Snapshot, SnapshotMetadata};
 use crate::jira::{JiraClient, JiraClientError};
 use crate::paths;
 use crate::persistence::{FileSnapshotStore, FileSnapshotStoreError};
 use chrono::Utc;
-use std::error::Error;
-use std::future::Future;
 use std::io::Write;
 use std::path::PathBuf;
-
-pub trait IssueFetcher {
-    type Error: Error + Send + Sync + 'static;
-
-    fn fetch_issues(
-        &self,
-        jql: &JiraJql,
-    ) -> impl Future<Output = Result<Vec<Issue>, Self::Error>> + Send;
-}
 
 #[derive(Debug, thiserror::Error)]
 pub enum SyncError {
@@ -28,23 +16,19 @@ pub enum SyncError {
     Config(#[from] config::ConfigError),
 
     #[error(transparent)]
-    Operation(#[from] SyncOperationError<JiraClientError, FileSnapshotStoreError>),
+    Operation(#[from] SyncOperationError),
 
     #[error("couldn't write synchronization result to stdout")]
     WriteOutput(#[source] std::io::Error),
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum SyncOperationError<FetchError, StoreError>
-where
-    FetchError: Error + 'static,
-    StoreError: Error + 'static,
-{
+pub enum SyncOperationError {
     #[error("couldn't fetch issues")]
-    FetchIssues(#[source] FetchError),
+    FetchIssues(#[source] JiraClientError),
 
     #[error("couldn't save snapshot")]
-    SaveSnapshot(#[source] StoreError),
+    SaveSnapshot(#[source] FileSnapshotStoreError),
 }
 
 pub async fn sync(config_path: Option<PathBuf>) -> Result<(), SyncError> {
@@ -65,16 +49,12 @@ pub async fn sync(config_path: Option<PathBuf>) -> Result<(), SyncError> {
     .map_err(SyncError::WriteOutput)
 }
 
-async fn sync_with<F, S>(
-    fetcher: &F,
-    store: &S,
+async fn sync_with(
+    fetcher: &JiraClient,
+    store: &FileSnapshotStore,
     jira_url: &JiraUrl,
     jql: &JiraJql,
-) -> Result<usize, SyncOperationError<F::Error, S::Error>>
-where
-    F: IssueFetcher,
-    S: SnapshotStore,
-{
+) -> Result<usize, SyncOperationError> {
     let issues = fetcher
         .fetch_issues(jql)
         .await

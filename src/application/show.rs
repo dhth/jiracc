@@ -1,4 +1,3 @@
-use crate::application::SnapshotStore;
 use crate::config;
 use crate::domain::Issue;
 use crate::paths;
