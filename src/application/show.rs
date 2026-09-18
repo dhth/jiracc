@@ -90,6 +90,7 @@ Description
 mod tests {
     use super::*;
     use crate::domain::{Assignee, IssueReference};
+    use insta::assert_snapshot;
 
     #[test]
     fn formats_a_fully_populated_issue() {
@@ -123,7 +124,7 @@ mod tests {
             ],
         };
 
-        insta::assert_snapshot!(format_issue(&issue), @"
+        assert_snapshot!(format_issue(&issue), @"
         TEST-42 — Investigate intermittent timeout
 
         Type:       Bug
@@ -156,7 +157,7 @@ mod tests {
             subtasks: Vec::new(),
         };
 
-        insta::assert_snapshot!(format_issue(&issue), @"
+        assert_snapshot!(format_issue(&issue), @"
         TEST-50 — Document the deployment process
 
         Type:       Task
