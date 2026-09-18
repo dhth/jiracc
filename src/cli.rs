@@ -34,6 +34,31 @@ enum Command {
         #[arg(short = 'p', long, value_name = "PATH")]
         config_path: Option<PathBuf>,
     },
+
+    /// Search cached issues
+    ///
+    /// With no query or filters, displays all cached issues.
+    Search {
+        /// Text to find in issue keys, summaries, or descriptions
+        #[arg(value_name = "QUERY")]
+        query: Option<String>,
+
+        /// Match a Jira username; may be repeated
+        #[arg(short = 'a', long = "assignee", value_name = "USERNAME")]
+        assignees: Vec<String>,
+
+        /// Match a Jira status; may be repeated
+        #[arg(short = 's', long = "status", value_name = "STATUS")]
+        statuses: Vec<String>,
+
+        /// Match a Jira issue type; may be repeated
+        #[arg(short = 't', long = "type", value_name = "TYPE")]
+        issue_types: Vec<String>,
+
+        /// Path to the configuration file
+        #[arg(short = 'p', long, value_name = "PATH")]
+        config_path: Option<PathBuf>,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -66,6 +91,19 @@ impl From<Args> for application::Command {
             } => Self::Config(application::ConfigCommand::Validate { config_path }),
             Command::Sync { config_path } => Self::Sync { config_path },
             Command::Show { key, config_path } => Self::Show { key, config_path },
+            Command::Search {
+                query,
+                assignees,
+                statuses,
+                issue_types,
+                config_path,
+            } => Self::Search {
+                query,
+                assignees,
+                statuses,
+                issue_types,
+                config_path,
+            },
         }
     }
 }

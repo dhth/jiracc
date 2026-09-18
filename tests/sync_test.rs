@@ -2,6 +2,7 @@ mod common;
 
 use anyhow::{Context, bail, ensure};
 use common::Fixture;
+use insta::assert_snapshot;
 use insta_cmd::assert_cmd_snapshot;
 use serde_json::json;
 use std::fmt::Write;
@@ -224,7 +225,7 @@ fn assert_data_directory_snapshot(name: &str, data_home: &Path) -> anyhow::Resul
             (r#"http://127\.0\.0\.1:\d+"#, "[mock-server-url]"),
         ]
     }, {
-        insta::assert_snapshot!(name, tree);
+        assert_snapshot!(name, tree);
     });
 
     Ok(())

@@ -47,6 +47,13 @@ impl IssueFilter {
             && matches_any(&self.issue_types, &issue.issue_type)
     }
 
+    pub fn is_unconstrained(&self) -> bool {
+        self.query.is_none()
+            && self.assignee_usernames.is_empty()
+            && self.statuses.is_empty()
+            && self.issue_types.is_empty()
+    }
+
     fn matches_query(&self, issue: &Issue) -> bool {
         let Some(query) = &self.query else {
             return true;
@@ -105,21 +112,6 @@ mod tests {
     //-------------//
     //  SUCCESSES  //
     //-------------//
-
-    #[test]
-    fn filter_without_constraints_matches_an_issue() -> anyhow::Result<()> {
-        // GIVEN
-        let filter = IssueFilter::new(None, Vec::new(), Vec::new(), Vec::new())?;
-        let issue = test_issue();
-
-        // WHEN
-        let result = filter.matches(&issue);
-
-        // THEN
-        assert!(result);
-
-        Ok(())
-    }
 
     #[test]
     fn query_matches_each_searchable_field() -> anyhow::Result<()> {
@@ -369,6 +361,21 @@ mod tests {
 
         // THEN
         assert!(!result);
+
+        Ok(())
+    }
+
+    #[test]
+    fn filter_without_criteria_matches_an_issue() -> anyhow::Result<()> {
+        // GIVEN
+        let filter = IssueFilter::new(None, Vec::new(), Vec::new(), Vec::new())?;
+        let issue = test_issue();
+
+        // WHEN
+        let result = filter.matches(&issue);
+
+        // THEN
+        assert!(result);
 
         Ok(())
     }

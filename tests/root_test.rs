@@ -23,6 +23,7 @@ fn shows_help() {
       config  Work with jiracc's configuration
       sync    Synchronize issues from Jira
       show    Show the cached details of an issue
+      search  Search cached issues
       help    Print this message or the help of the given subcommand(s)
 
     Options:
