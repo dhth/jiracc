@@ -47,6 +47,13 @@ impl IssueFilter {
             && matches_any(&self.issue_types, &issue.issue_type)
     }
 
+    pub fn is_unconstrained(&self) -> bool {
+        self.query.is_none()
+            && self.assignee_usernames.is_empty()
+            && self.statuses.is_empty()
+            && self.issue_types.is_empty()
+    }
+
     fn matches_query(&self, issue: &Issue) -> bool {
         let Some(query) = &self.query else {
             return true;

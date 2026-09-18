@@ -66,17 +66,22 @@ where
     let snapshot = store
         .get_snapshot()
         .map_err(SearchOperationError::LoadSnapshot)?;
-    let issues = snapshot
-        .issues
-        .iter()
-        .filter(|issue| filter.matches(issue))
-        .collect::<Vec<_>>();
+
+    let issues = {
+        let mut issues = snapshot.issues;
+
+        if !filter.is_unconstrained() {
+            issues.retain(|issue| filter.matches(issue));
+        }
+
+        issues
+    };
 
     if issues.is_empty() {
         return Ok(());
     }
 
-    write_search_results(output, issues).map_err(SearchOperationError::WriteOutput)?;
+    write_search_results(output, &issues).map_err(SearchOperationError::WriteOutput)?;
 
     Ok(())
 }
