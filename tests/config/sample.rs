@@ -32,7 +32,7 @@ fn prints_config() {
 
     // WHEN
     // THEN
-    assert_cmd_snapshot!(cmd, @r##"
+    assert_cmd_snapshot!(cmd, @r#"
     success: true
     exit_code: 0
     ----- stdout -----
@@ -40,7 +40,7 @@ fn prints_config() {
     # variables need to be set before running jiracc.
 
     [jira]
-    # Base URL of your on-premise Jira Server or Data Center installation.
+    # Base URL of your Jira Data Center deployment.
     url = "https://jira.example.com"
 
     # Personal access token used to authenticate with Jira.
@@ -53,5 +53,5 @@ fn prints_config() {
     """
 
     ----- stderr -----
-    "##);
+    "#);
 }

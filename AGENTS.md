@@ -1,7 +1,7 @@
 # jiracc
 
 `jiracc` synchronizes Jira issues into a local snapshot for offline search and
-inspection. It only supports on-premise Jira installations.
+inspection. It supports Jira Data Center only; Jira Cloud is not supported.
 
 This project uses `mise` for tool management and tasks. Always use `mise` to
 execute project commands; see `mise.toml` for the available tasks.
