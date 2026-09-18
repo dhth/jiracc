@@ -2,6 +2,20 @@
 name = "jiracc"
 version = "0.1.0-alpha.1"
 edition = "2024"
+repository = "https://github.com/dhth/jiracc"
+description = "jiracc lets you access your JIRA issues offline"
+homepage = "https://github.com/dhth/jiracc"
+keywords = [
+    "cli",
+    "jira",
+]
+categories = [
+    "command-line-utilities",
+]
+exclude = [
+    ".github",
+    "AGENTS.md",
+]
 
 [dependencies]
 anyhow = "1.0.104"
