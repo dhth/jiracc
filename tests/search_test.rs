@@ -12,7 +12,9 @@ const TOKEN_ENVIRONMENT_VARIABLE: &str = "JIRACC_SEARCH_TEST_TOKEN";
 const JQL: &str = "project = TEST
 ORDER BY updated DESC
 ";
-const SEARCH_RESPONSE: &str = include_str!("testdata/jira/search-response-5-issues.json");
+const SEARCH_RESPONSE_FIVE_ISSUES: &str =
+    include_str!("testdata/jira/search-response-5-issues.json");
+const SEARCH_RESPONSE_EMPTY: &str = include_str!("testdata/jira/search-response-empty.json");
 
 struct TestContext {
     fixture: Fixture,
@@ -62,12 +64,10 @@ impl TestContext {
         command
     }
 
-    async fn seed_snapshot(&self) -> anyhow::Result<()> {
+    async fn seed_snapshot(&self, response: &'static str) -> anyhow::Result<()> {
         Mock::given(method("POST"))
             .and(path("/rest/api/2/search"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_raw(SEARCH_RESPONSE, "application/json"),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_raw(response, "application/json"))
             .expect(1)
             .mount(&self.server)
             .await;
@@ -103,17 +103,29 @@ fn shows_help() {
     ----- stdout -----
     Search cached issues
 
+    With no query or filters, displays all cached issues.
+
     Usage: jiracc search [OPTIONS] [QUERY]
 
     Arguments:
-      [QUERY]  Text to find in issue keys, summaries, or descriptions
+      [QUERY]
+              Text to find in issue keys, summaries, or descriptions
 
     Options:
-      -a, --assignee <USERNAME>  Match a Jira username; may be repeated
-      -s, --status <STATUS>      Match a Jira status; may be repeated
-      -t, --type <TYPE>          Match a Jira issue type; may be repeated
-      -p, --config-path <PATH>   Path to the configuration file
-      -h, --help                 Print help
+      -a, --assignee <USERNAME>
+              Match a Jira username; may be repeated
+
+      -s, --status <STATUS>
+              Match a Jira status; may be repeated
+
+      -t, --type <TYPE>
+              Match a Jira issue type; may be repeated
+
+      -p, --config-path <PATH>
+              Path to the configuration file
+
+      -h, --help
+              Print help (see a summary with '-h')
 
     ----- stderr -----
     ");
@@ -124,7 +136,7 @@ fn shows_help() {
 async fn finds_and_prints_matched_issues() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
-    context.seed_snapshot().await?;
+    context.seed_snapshot(SEARCH_RESPONSE_FIVE_ISSUES).await?;
     let mut cmd = context.search_command(None);
     cmd.args(["--assignee", "alice", "--status", "Open", "--type", "Bug"]);
 
@@ -149,7 +161,7 @@ async fn finds_and_prints_matched_issues() -> anyhow::Result<()> {
 async fn accepts_repeated_filter_values() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
-    context.seed_snapshot().await?;
+    context.seed_snapshot(SEARCH_RESPONSE_FIVE_ISSUES).await?;
     let mut cmd = context.search_command(Some("VPN"));
     cmd.args([
         "--assignee",
@@ -187,8 +199,56 @@ async fn accepts_repeated_filter_values() -> anyhow::Result<()> {
 async fn prints_nothing_when_no_issues_match() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
-    context.seed_snapshot().await?;
+    context.seed_snapshot(SEARCH_RESPONSE_FIVE_ISSUES).await?;
     let mut cmd = context.search_command(Some("database migration"));
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn lists_all_cached_issues_without_criteria() -> anyhow::Result<()> {
+    // GIVEN
+    let context = TestContext::new().await?;
+    context.seed_snapshot(SEARCH_RESPONSE_FIVE_ISSUES).await?;
+    let mut cmd = context.search_command(None);
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    KEY     TYPE   STATUS       ASSIGNEE  SUMMARY
+    TEST-1  Bug    Open         @alice    Investigate connection timeout
+    TEST-3  Bug    Open         @alice    Retry synchronization failures
+    TEST-4  Bug    Open         @charlie  Diagnose connection pool exhaustion
+    TEST-5  Bug    Done         @alice    Document connection recovery
+    TEST-6  Story  In Progress  @bob      Improve VPN error reporting
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn prints_nothing_when_the_snapshot_is_empty() -> anyhow::Result<()> {
+    // GIVEN
+    let context = TestContext::new().await?;
+    context.seed_snapshot(SEARCH_RESPONSE_EMPTY).await?;
+    let mut cmd = context.search_command(None);
 
     // WHEN
     // THEN
@@ -208,10 +268,10 @@ async fn prints_nothing_when_no_issues_match() -> anyhow::Result<()> {
 //------------//
 
 #[test]
-fn requires_search_criteria() {
+fn rejects_an_explicitly_empty_query() {
     // GIVEN
     let fixture = Fixture::new();
-    let mut cmd = fixture.cmd(["search"]);
+    let mut cmd = fixture.cmd(["search", ""]);
 
     // WHEN
     // THEN
@@ -221,7 +281,25 @@ fn requires_search_criteria() {
     ----- stdout -----
 
     ----- stderr -----
-    Error: search requires a query or at least one filter
+    Error: search query must not be empty
+    ");
+}
+
+#[test]
+fn rejects_a_whitespace_only_query() {
+    // GIVEN
+    let fixture = Fixture::new();
+    let mut cmd = fixture.cmd(["search", "   "]);
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+
+    ----- stderr -----
+    Error: search query must not be empty
     ");
 }
 
@@ -230,7 +308,7 @@ fn requires_search_criteria() {
 async fn reports_a_missing_snapshot() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
-    let mut cmd = context.search_command(Some("connection"));
+    let mut cmd = context.search_command(None);
 
     // WHEN
     // THEN
