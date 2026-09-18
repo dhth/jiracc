@@ -142,7 +142,7 @@ async fn shows_a_cached_issue_without_loading_the_config() -> anyhow::Result<()>
     success: true
     exit_code: 0
     ----- stdout -----
-    ==> TEST-1 — Example issue
+    TEST-1 — Example issue
 
     Type:       Task
     Status:     In Progress

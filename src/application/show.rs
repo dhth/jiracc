@@ -64,7 +64,7 @@ fn format_issue(issue: &Issue) -> String {
     let description = issue.description.as_deref().unwrap_or("No description.");
 
     format!(
-        "==> {key} — {summary}
+        "{key} — {summary}
 
 Type:       {issue_type}
 Status:     {status}
@@ -124,7 +124,7 @@ mod tests {
         };
 
         insta::assert_snapshot!(format_issue(&issue), @"
-        ==> TEST-42 — Investigate intermittent timeout
+        TEST-42 — Investigate intermittent timeout
 
         Type:       Bug
         Status:     In Progress
@@ -157,7 +157,7 @@ mod tests {
         };
 
         insta::assert_snapshot!(format_issue(&issue), @"
-        ==> TEST-50 — Document the deployment process
+        TEST-50 — Document the deployment process
 
         Type:       Task
         Status:     Open
