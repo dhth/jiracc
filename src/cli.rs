@@ -30,6 +30,13 @@ enum Command {
         config_path: Option<PathBuf>,
     },
 
+    /// Show information about the local issue cache
+    Status {
+        /// Path to the configuration file
+        #[arg(short = 'p', long, value_name = "PATH")]
+        config_path: Option<PathBuf>,
+    },
+
     /// Show the cached details of an issue
     Show {
         /// Jira issue key
@@ -109,6 +116,7 @@ impl From<Args> for application::Command {
                 command: ConfigCommand::Validate { config_path },
             } => Self::Config(application::ConfigCommand::Validate { config_path }),
             Command::Sync { config_path } => Self::Sync { config_path },
+            Command::Status { config_path } => Self::Status { config_path },
             Command::Show { key, config_path } => Self::Show { key, config_path },
             Command::Search {
                 query,

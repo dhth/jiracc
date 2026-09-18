@@ -23,6 +23,7 @@ fn shows_help() {
       auth    Work with Jira authentication
       config  Work with jiracc's configuration
       sync    Synchronize issues from Jira
+      status  Show information about the local issue cache
       show    Show the cached details of an issue
       search  Search cached issues
       help    Print this message or the help of the given subcommand(s)
