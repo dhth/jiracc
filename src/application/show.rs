@@ -20,7 +20,7 @@ pub enum ShowError {
     IssueNotFound { key: String },
 
     #[error("couldn't write issue details to stdout")]
-    WriteOutput(#[source] std::io::Error),
+    WriteOutput(#[from] std::io::Error),
 }
 
 pub fn show(key: String, config_path: Option<PathBuf>) -> Result<(), ShowError> {
@@ -37,7 +37,9 @@ pub fn show(key: String, config_path: Option<PathBuf>) -> Result<(), ShowError> 
 
     let output = format_issue(&issue);
     let mut stdout = std::io::stdout().lock();
-    writeln!(stdout, "{output}").map_err(ShowError::WriteOutput)
+    writeln!(stdout, "{output}")?;
+
+    Ok(())
 }
 
 fn format_issue(issue: &Issue) -> String {

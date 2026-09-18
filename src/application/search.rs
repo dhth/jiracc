@@ -25,10 +25,10 @@ pub enum SearchError {
 #[derive(Debug, thiserror::Error)]
 pub enum SearchOperationError {
     #[error(transparent)]
-    LoadSnapshot(FileSnapshotStoreError),
+    LoadSnapshot(#[from] FileSnapshotStoreError),
 
     #[error("couldn't write search results to stdout")]
-    WriteOutput(#[source] std::io::Error),
+    WriteOutput(#[from] std::io::Error),
 }
 
 pub fn search(
@@ -58,9 +58,7 @@ fn search_with<W>(
 where
     W: Write,
 {
-    let snapshot = store
-        .get_snapshot()
-        .map_err(SearchOperationError::LoadSnapshot)?;
+    let snapshot = store.get_snapshot()?;
 
     let issues = {
         let mut issues = snapshot.issues;
@@ -76,7 +74,7 @@ where
         return Ok(());
     }
 
-    write_search_results(output, &issues).map_err(SearchOperationError::WriteOutput)?;
+    write_search_results(output, &issues)?;
 
     Ok(())
 }

@@ -22,7 +22,8 @@ configuration → Jira API → snapshot storage → search/show
 
 Keep Jira transport concerns inside `jira` and convert them to domain types at
 that boundary. Keep orchestration in `application`, not in the CLI. `search` and
-`show` operate only on persisted snapshots; only `sync` communicates with Jira.
+`show` operate only on persisted snapshots. `sync` and `auth check` are the only
+commands that communicate with Jira.
 
 Prefer pure transformations and explicit inputs and outputs while keeping the
 code idiomatic to Rust. Keep filesystem, network, environment, and terminal

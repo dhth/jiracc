@@ -1,9 +1,12 @@
-use super::dto::{SearchRequest, SearchResponse};
+use super::dto::{CurrentUser, SearchRequest, SearchResponse};
 use crate::config::{JiraJql, JiraToken, JiraUrl};
 use crate::domain::Issue;
 use reqwest::StatusCode;
+use std::time::Duration;
 
+const CURRENT_USER_PATH: &str = "/rest/api/2/myself";
 const SEARCH_PATH: &str = "/rest/api/2/search";
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 const INITIAL_PAGE_SIZE: usize = 100;
 const ISSUE_FIELDS: &[&str] = &[
     "summary",
@@ -22,15 +25,24 @@ pub struct JiraClient {
     token: JiraToken,
 }
 
+#[derive(Debug, Eq, PartialEq)]
+pub struct JiraUser {
+    pub username: String,
+    pub display_name: String,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum JiraClientError {
-    #[error("failed to send Jira search request")]
+    #[error("failed to build Jira HTTP client")]
+    BuildClient(#[source] reqwest::Error),
+
+    #[error("failed to send request to Jira")]
     Request(#[source] reqwest::Error),
 
-    #[error("Jira search request failed with status {status}")]
+    #[error("Jira request failed with HTTP status: {status}")]
     ResponseStatus { status: StatusCode },
 
-    #[error("failed to decode Jira search response")]
+    #[error("failed to decode response from Jira")]
     Decode(#[source] reqwest::Error),
 
     #[error("Jira returned page start {received} when {requested} was requested")]
@@ -44,12 +56,42 @@ pub enum JiraClientError {
 }
 
 impl JiraClient {
-    pub fn new(url: &JiraUrl, token: &JiraToken) -> Self {
-        Self {
-            http_client: reqwest::Client::new(),
+    pub fn new(url: &JiraUrl, token: &JiraToken) -> Result<Self, JiraClientError> {
+        let http_client = reqwest::Client::builder()
+            .timeout(REQUEST_TIMEOUT)
+            .build()
+            .map_err(JiraClientError::BuildClient)?;
+
+        Ok(Self {
+            http_client,
             url: url.clone(),
             token: token.clone(),
+        })
+    }
+
+    pub async fn get_current_user(&self) -> Result<JiraUser, JiraClientError> {
+        let response = self
+            .http_client
+            .get(format!("{}{CURRENT_USER_PATH}", self.url.as_str()))
+            .bearer_auth(self.token.as_str())
+            .send()
+            .await
+            .map_err(JiraClientError::Request)?;
+        let status = response.status();
+
+        if status != StatusCode::OK {
+            return Err(JiraClientError::ResponseStatus { status });
         }
+
+        let user = response
+            .json::<CurrentUser>()
+            .await
+            .map_err(JiraClientError::Decode)?;
+
+        Ok(JiraUser {
+            username: user.name,
+            display_name: user.display_name,
+        })
     }
 
     pub async fn fetch_issues(&self, jql: &JiraJql) -> Result<Vec<Issue>, JiraClientError> {
@@ -85,10 +127,7 @@ impl JiraClient {
         };
         let response = self
             .http_client
-            .post(format!(
-                "{}{SEARCH_PATH}",
-                self.url.as_str().trim_end_matches('/')
-            ))
+            .post(format!("{}{SEARCH_PATH}", self.url.as_str()))
             .bearer_auth(self.token.as_str())
             .json(&request)
             .send()

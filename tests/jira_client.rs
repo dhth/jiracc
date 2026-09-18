@@ -22,7 +22,7 @@ impl TestContext {
         let url = JiraUrl::try_from(server.uri())?;
         let token = JiraToken::try_from(TOKEN.to_owned())?;
         let jql = JiraJql::try_from(JQL.to_owned())?;
-        let client = JiraClient::new(&url, &token);
+        let client = JiraClient::new(&url, &token)?;
 
         Ok(Self {
             server,
@@ -42,11 +42,44 @@ impl TestContext {
             .mount(&self.server)
             .await;
     }
+
+    async fn expect_current_user(&self, response: ResponseTemplate) {
+        Mock::given(method("GET"))
+            .and(path("/rest/api/2/myself"))
+            .and(bearer_token(TOKEN))
+            .respond_with(response)
+            .expect(1)
+            .mount(&self.server)
+            .await;
+    }
 }
 
 //-------------//
 //  SUCCESSES  //
 //-------------//
+
+#[tokio::test]
+async fn gets_the_authenticated_user() -> anyhow::Result<()> {
+    // GIVEN
+    let context = TestContext::new().await?;
+    context
+        .expect_current_user(ResponseTemplate::new(200).set_body_json(json!({
+            "name": "alice",
+            "displayName": "Alice Example",
+            "active": true,
+            "emailAddress": "alice@example.com"
+        })))
+        .await;
+
+    // WHEN
+    let user = context.client.get_current_user().await?;
+
+    // THEN
+    assert_eq!(user.username, "alice");
+    assert_eq!(user.display_name, "Alice Example");
+
+    Ok(())
+}
 
 #[tokio::test]
 async fn fetches_and_normalizes_a_single_page() -> anyhow::Result<()> {
@@ -326,6 +359,54 @@ async fn stops_after_a_decreasing_total() -> anyhow::Result<()> {
 //------------//
 //  FAILURES  //
 //------------//
+
+#[tokio::test]
+async fn non_200_current_user_responses_return_their_status() -> anyhow::Result<()> {
+    for expected_status in [
+        StatusCode::NO_CONTENT,
+        StatusCode::UNAUTHORIZED,
+        StatusCode::FORBIDDEN,
+        StatusCode::INTERNAL_SERVER_ERROR,
+    ] {
+        // GIVEN
+        let context = TestContext::new().await?;
+        context
+            .expect_current_user(
+                ResponseTemplate::new(expected_status.as_u16()).set_body_string("not inspected"),
+            )
+            .await;
+
+        // WHEN
+        let result = context.client.get_current_user().await;
+
+        // THEN
+        let Err(JiraClientError::ResponseStatus { status }) = result else {
+            bail!("expected a response status error for {expected_status}, got {result:?}");
+        };
+        assert_eq!(status, expected_status);
+    }
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn an_unexpected_current_user_response_returns_an_error() -> anyhow::Result<()> {
+    // GIVEN
+    let context = TestContext::new().await?;
+    context
+        .expect_current_user(ResponseTemplate::new(200).set_body_json(json!({
+            "name": "alice"
+        })))
+        .await;
+
+    // WHEN
+    let result = context.client.get_current_user().await;
+
+    // THEN
+    assert!(matches!(result, Err(JiraClientError::Decode(_))));
+
+    Ok(())
+}
 
 #[tokio::test]
 async fn an_http_failure_on_a_later_page_returns_an_error() -> anyhow::Result<()> {

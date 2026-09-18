@@ -190,7 +190,7 @@ impl TryFrom<String> for JiraUrl {
             return Err(ConfigError::JiraUrlContainsQueryOrFragment);
         }
 
-        Ok(Self(value))
+        Ok(Self(value.trim_end_matches('/').to_owned()))
     }
 }
 
@@ -257,6 +257,25 @@ jql = "project = TEST"
         assert_eq!(result.jira.url.as_str(), "https://jira.example.com/jira");
         assert_eq!(result.jira.token.as_str(), "secret-token");
         assert_eq!(result.jira.jql.as_str(), "project = TEST");
+
+        Ok(())
+    }
+
+    #[test]
+    fn parsing_config_removes_trailing_slashes_from_jira_url() -> anyhow::Result<()> {
+        // GIVEN
+        let config_str = r#"
+[jira]
+url = "https://jira.example.com/jira///"
+token = "secret-token"
+jql = "project = TEST"
+"#;
+
+        // WHEN
+        let result = parse(config_str, test_environment)?;
+
+        // THEN
+        assert_eq!(result.jira.url.as_str(), "https://jira.example.com/jira");
 
         Ok(())
     }
