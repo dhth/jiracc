@@ -36,6 +36,8 @@ enum Command {
     },
 
     /// Search cached issues
+    ///
+    /// With no query or filters, displays all cached issues.
     Search {
         /// Text to find in issue keys, summaries, or descriptions
         #[arg(value_name = "QUERY")]

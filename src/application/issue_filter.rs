@@ -10,9 +10,6 @@ pub struct IssueFilter {
 
 #[derive(Debug, thiserror::Error)]
 pub enum IssueFilterError {
-    #[error("search requires a query or at least one filter")]
-    NoCriteria,
-
     #[error("search query must not be empty")]
     EmptyQuery,
 }
@@ -24,14 +21,6 @@ impl IssueFilter {
         statuses: Vec<String>,
         issue_types: Vec<String>,
     ) -> Result<Self, IssueFilterError> {
-        if query.is_none()
-            && assignee_usernames.is_empty()
-            && statuses.is_empty()
-            && issue_types.is_empty()
-        {
-            return Err(IssueFilterError::NoCriteria);
-        }
-
         let query = match query {
             Some(query) => {
                 let query = query.trim();
@@ -56,6 +45,13 @@ impl IssueFilter {
             && self.matches_assignee(issue)
             && matches_any(&self.statuses, &issue.status)
             && matches_any(&self.issue_types, &issue.issue_type)
+    }
+
+    pub fn is_unconstrained(&self) -> bool {
+        self.query.is_none()
+            && self.assignee_usernames.is_empty()
+            && self.statuses.is_empty()
+            && self.issue_types.is_empty()
     }
 
     fn matches_query(&self, issue: &Issue) -> bool {
@@ -369,19 +365,24 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    fn filter_without_criteria_matches_an_issue() -> anyhow::Result<()> {
+        // GIVEN
+        let filter = IssueFilter::new(None, Vec::new(), Vec::new(), Vec::new())?;
+        let issue = test_issue();
+
+        // WHEN
+        let result = filter.matches(&issue);
+
+        // THEN
+        assert!(result);
+
+        Ok(())
+    }
+
     //------------//
     //  FAILURES  //
     //------------//
-
-    #[test]
-    fn filter_without_criteria_cannot_be_created() {
-        // GIVEN
-        // WHEN
-        let result = IssueFilter::new(None, Vec::new(), Vec::new(), Vec::new());
-
-        // THEN
-        assert!(matches!(result, Err(IssueFilterError::NoCriteria)));
-    }
 
     #[test]
     fn empty_query_fails() {
