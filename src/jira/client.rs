@@ -1,9 +1,7 @@
 use super::dto::{SearchRequest, SearchResponse};
-use crate::application::IssueFetcher;
 use crate::config::{JiraJql, JiraToken, JiraUrl};
 use crate::domain::Issue;
 use reqwest::StatusCode;
-use std::future::Future;
 
 const SEARCH_PATH: &str = "/rest/api/2/search";
 const INITIAL_PAGE_SIZE: usize = 100;
@@ -54,7 +52,7 @@ impl JiraClient {
         }
     }
 
-    async fn fetch_all_issues(&self, jql: &JiraJql) -> Result<Vec<Issue>, JiraClientError> {
+    pub async fn fetch_issues(&self, jql: &JiraJql) -> Result<Vec<Issue>, JiraClientError> {
         let mut issues = Vec::new();
         let mut start_at = 0;
         let mut page_size = INITIAL_PAGE_SIZE;
@@ -103,17 +101,6 @@ impl JiraClient {
         }
 
         response.json().await.map_err(JiraClientError::Decode)
-    }
-}
-
-impl IssueFetcher for JiraClient {
-    type Error = JiraClientError;
-
-    fn fetch_issues(
-        &self,
-        jql: &JiraJql,
-    ) -> impl Future<Output = Result<Vec<Issue>, Self::Error>> + Send {
-        self.fetch_all_issues(jql)
     }
 }
 

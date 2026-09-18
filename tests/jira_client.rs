@@ -1,5 +1,4 @@
 use anyhow::{Context, bail};
-use jiracc::application::IssueFetcher;
 use jiracc::config::{JiraJql, JiraToken, JiraUrl};
 use jiracc::jira::{JiraClient, JiraClientError};
 use reqwest::StatusCode;

@@ -1,9 +1,8 @@
-use crate::application::{IssueFilter, IssueFilterError, SnapshotStore};
+use crate::application::{IssueFilter, IssueFilterError};
 use crate::config;
 use crate::domain::Issue;
 use crate::paths;
 use crate::persistence::{FileSnapshotStore, FileSnapshotStoreError};
-use std::error::Error;
 use std::io::Write;
 use std::path::PathBuf;
 use tabwriter::TabWriter;
@@ -20,16 +19,13 @@ pub enum SearchError {
     ConfigPath(#[from] config::ConfigError),
 
     #[error(transparent)]
-    Operation(#[from] SearchOperationError<FileSnapshotStoreError>),
+    Operation(#[from] SearchOperationError),
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum SearchOperationError<StoreError>
-where
-    StoreError: Error + 'static,
-{
+pub enum SearchOperationError {
     #[error(transparent)]
-    LoadSnapshot(StoreError),
+    LoadSnapshot(FileSnapshotStoreError),
 
     #[error("couldn't write search results to stdout")]
     WriteOutput(#[source] std::io::Error),
@@ -54,13 +50,12 @@ pub fn search(
     Ok(())
 }
 
-fn search_with<S, W>(
-    store: &S,
+fn search_with<W>(
+    store: &FileSnapshotStore,
     output: &mut W,
     filter: &IssueFilter,
-) -> Result<(), SearchOperationError<S::Error>>
+) -> Result<(), SearchOperationError>
 where
-    S: SnapshotStore,
     W: Write,
 {
     let snapshot = store
