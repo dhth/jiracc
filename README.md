@@ -135,7 +135,7 @@ he gets his inventory.
 Run `jiracc sync` again whenever you want to replace the snapshot with current
 data from Jira.
 
-`>_` CLI interface
+`>_` Commands
 ---
 
 | Command                  | What it does                                      |
