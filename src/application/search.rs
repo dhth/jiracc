@@ -1,4 +1,4 @@
-use crate::application::{IssueFilter, IssueFilterError, SnapshotStore, issue_formatter};
+use crate::application::{IssueFilter, IssueFilterError, SnapshotStore};
 use crate::config;
 use crate::domain::Issue;
 use crate::paths;
@@ -76,17 +76,11 @@ where
         return Ok(());
     }
 
-    let formatted_issues = issues
-        .into_iter()
-        .map(issue_formatter::format_issue)
-        .collect::<Vec<_>>()
-        .join("\n\n\n");
-    writeln!(output, "{formatted_issues}").map_err(SearchOperationError::WriteOutput)?;
+    write_search_results(output, issues).map_err(SearchOperationError::WriteOutput)?;
 
     Ok(())
 }
 
-#[allow(dead_code)]
 fn write_search_results<'a, W, I>(output: W, issues: I) -> std::io::Result<()>
 where
     W: Write,

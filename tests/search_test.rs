@@ -134,34 +134,9 @@ async fn finds_and_prints_matched_issues() -> anyhow::Result<()> {
     success: true
     exit_code: 0
     ----- stdout -----
-    ==> TEST-1 — Investigate connection timeout
-
-    Type:       Bug
-    Status:     Open
-    Assignee:   Alice Example (@alice)
-    Updated:    2026-09-15T10:00:00.000+0000
-    Jira ID:    10001
-    Parent:     TEST-0
-    Subtasks:   TEST-2
-
-    Description
-    -----------
-    Connections fail after reconnecting to the VPN.
-
-
-    ==> TEST-3 — Retry synchronization failures
-
-    Type:       Bug
-    Status:     Open
-    Assignee:   Alice Example (@alice)
-    Updated:    2026-09-16T14:30:00.000+0000
-    Jira ID:    10003
-    Parent:     None
-    Subtasks:   None
-
-    Description
-    -----------
-    Retry after a connection timeout.
+    KEY     TYPE  STATUS  ASSIGNEE  SUMMARY
+    TEST-1  Bug   Open    @alice    Investigate connection timeout
+    TEST-3  Bug   Open    @alice    Retry synchronization failures
 
     ----- stderr -----
     ");
@@ -197,34 +172,9 @@ async fn accepts_repeated_filter_values() -> anyhow::Result<()> {
     success: true
     exit_code: 0
     ----- stdout -----
-    ==> TEST-1 — Investigate connection timeout
-
-    Type:       Bug
-    Status:     Open
-    Assignee:   Alice Example (@alice)
-    Updated:    2026-09-15T10:00:00.000+0000
-    Jira ID:    10001
-    Parent:     TEST-0
-    Subtasks:   TEST-2
-
-    Description
-    -----------
-    Connections fail after reconnecting to the VPN.
-
-
-    ==> TEST-6 — Improve VPN error reporting
-
-    Type:       Story
-    Status:     In Progress
-    Assignee:   Bob Example (@bob)
-    Updated:    2026-09-12T08:00:00.000+0000
-    Jira ID:    10006
-    Parent:     None
-    Subtasks:   None
-
-    Description
-    -----------
-    Show clearer errors when VPN connectivity is lost.
+    KEY     TYPE   STATUS       ASSIGNEE  SUMMARY
+    TEST-1  Bug    Open         @alice    Investigate connection timeout
+    TEST-6  Story  In Progress  @bob      Improve VPN error reporting
 
     ----- stderr -----
     ");
