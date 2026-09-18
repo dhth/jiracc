@@ -94,8 +94,8 @@ Search results are printed as a compact table:
 ```text
 KEY     TYPE   STATUS       ASSIGNEE          SUMMARY
 OPS-42  Task   In Progress  @leon.kennedy     Rescue the president's daughter
-LAB-51  Task   To Do        @luis.sera        Retrieve suppressants from the laboratory
-ORG-58  Story  In Progress  @ada.wong         Secure the Amber without revealing the objective
+LAB-51  Task   To Do        @luis.sera        Retrieve suppressants from the lab
+ORG-58  Story  In Progress  @ada.wong         Secure the Amber
 PLG-71  Task   To Do        @ramon.salazar    Keep intruders out of the castle
 PLG-84  Story  In Progress  @jack.krauser     Settle unfinished business with Leon
 PLG-90  Epic   In Progress  @osmund.saddler   Spread Las Plagas beyond the island
