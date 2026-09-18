@@ -11,6 +11,12 @@ pub struct Args {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Work with Jira authentication
+    Auth {
+        #[command(subcommand)]
+        command: AuthCommand,
+    },
+
     /// Work with jiracc's configuration
     Config {
         #[command(subcommand)]
@@ -62,6 +68,16 @@ enum Command {
 }
 
 #[derive(Debug, Subcommand)]
+enum AuthCommand {
+    /// Check Jira authentication
+    Check {
+        /// Path to the configuration file
+        #[arg(short = 'p', long, value_name = "PATH")]
+        config_path: Option<PathBuf>,
+    },
+}
+
+#[derive(Debug, Subcommand)]
 enum ConfigCommand {
     /// Create a sample configuration at the default path
     Init,
@@ -80,6 +96,9 @@ enum ConfigCommand {
 impl From<Args> for application::Command {
     fn from(args: Args) -> Self {
         match args.command {
+            Command::Auth {
+                command: AuthCommand::Check { config_path },
+            } => Self::Auth(application::AuthCommand::Check { config_path }),
             Command::Config {
                 command: ConfigCommand::Init,
             } => Self::Config(application::ConfigCommand::Init),

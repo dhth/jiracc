@@ -1,3 +1,4 @@
+mod auth;
 mod config;
 mod issue_filter;
 mod search;
@@ -6,6 +7,7 @@ mod sync;
 
 use std::path::PathBuf;
 
+pub use auth::CheckAuthError;
 pub use config::{InitConfigError, SampleConfigError, ValidateConfigError};
 pub use issue_filter::{IssueFilter, IssueFilterError};
 pub use search::{SearchError, SearchOperationError};
@@ -13,6 +15,7 @@ pub use show::ShowError;
 pub use sync::{SyncError, SyncOperationError, sync};
 
 pub enum Command {
+    Auth(AuthCommand),
     Config(ConfigCommand),
     Sync {
         config_path: Option<PathBuf>,
@@ -30,6 +33,10 @@ pub enum Command {
     },
 }
 
+pub enum AuthCommand {
+    Check { config_path: Option<PathBuf> },
+}
+
 pub enum ConfigCommand {
     Init,
     Sample,
@@ -38,6 +45,9 @@ pub enum ConfigCommand {
 
 #[derive(Debug, thiserror::Error)]
 pub enum ApplicationError {
+    #[error(transparent)]
+    CheckAuth(#[from] CheckAuthError),
+
     #[error(transparent)]
     InitConfig(#[from] InitConfigError),
 
@@ -59,6 +69,7 @@ pub enum ApplicationError {
 
 pub async fn run(command: Command) -> Result<(), ApplicationError> {
     match command {
+        Command::Auth(AuthCommand::Check { config_path }) => auth::check(config_path).await?,
         Command::Config(ConfigCommand::Init) => config::init()?,
         Command::Config(ConfigCommand::Sample) => config::sample()?,
         Command::Config(ConfigCommand::Validate { config_path }) => config::validate(config_path)?,

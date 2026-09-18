@@ -20,6 +20,7 @@ fn shows_help() {
     Usage: jiracc <COMMAND>
 
     Commands:
+      auth    Work with Jira authentication
       config  Work with jiracc's configuration
       sync    Synchronize issues from Jira
       show    Show the cached details of an issue

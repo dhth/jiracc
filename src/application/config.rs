@@ -42,7 +42,7 @@ pub enum InitConfigError {
 #[derive(Debug, thiserror::Error)]
 pub enum SampleConfigError {
     #[error("couldn't write sample configuration to stdout")]
-    Write(#[source] std::io::Error),
+    Write(#[from] std::io::Error),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -51,10 +51,10 @@ pub enum ValidateConfigError {
     Paths(#[from] paths::PathsError),
 
     #[error("configuration is invalid")]
-    Invalid(#[source] crate::config::ConfigError),
+    Invalid(#[from] crate::config::ConfigError),
 
     #[error("couldn't write configuration validation result to stdout")]
-    Write(#[source] std::io::Error),
+    Write(#[from] std::io::Error),
 }
 
 pub fn init() -> Result<(), InitConfigError> {
@@ -104,8 +104,9 @@ Edit it to match your Jira setup.",
 pub fn sample() -> Result<(), SampleConfigError> {
     std::io::stdout()
         .lock()
-        .write_all(SAMPLE_CONFIG.as_bytes())
-        .map_err(SampleConfigError::Write)
+        .write_all(SAMPLE_CONFIG.as_bytes())?;
+
+    Ok(())
 }
 
 pub fn validate(config_path: Option<PathBuf>) -> Result<(), ValidateConfigError> {
@@ -114,10 +115,11 @@ pub fn validate(config_path: Option<PathBuf>) -> Result<(), ValidateConfigError>
         None => paths::get()?.config,
     };
 
-    crate::config::load(&config_path).map_err(ValidateConfigError::Invalid)?;
+    crate::config::load(&config_path)?;
 
     std::io::stdout()
         .lock()
-        .write_all(VALID_CONFIG_MESSAGE.as_bytes())
-        .map_err(ValidateConfigError::Write)
+        .write_all(VALID_CONFIG_MESSAGE.as_bytes())?;
+
+    Ok(())
 }

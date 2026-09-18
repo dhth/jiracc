@@ -22,16 +22,16 @@ pub enum SyncError {
     Operation(#[from] SyncOperationError),
 
     #[error("couldn't write synchronization result to stdout")]
-    WriteOutput(#[source] std::io::Error),
+    WriteOutput(#[from] std::io::Error),
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum SyncOperationError {
     #[error("couldn't fetch issues")]
-    FetchIssues(#[source] JiraClientError),
+    FetchIssues(#[from] JiraClientError),
 
     #[error("couldn't save snapshot")]
-    SaveSnapshot(#[source] FileSnapshotStoreError),
+    SaveSnapshot(#[from] FileSnapshotStoreError),
 }
 
 pub async fn sync(config_path: Option<PathBuf>) -> Result<(), SyncError> {
@@ -48,8 +48,9 @@ pub async fn sync(config_path: Option<PathBuf>) -> Result<(), SyncError> {
         0 => writeln!(stdout, "No issues found."),
         1 => writeln!(stdout, "Synchronized 1 issue."),
         _ => writeln!(stdout, "Synchronized {issue_count} issues."),
-    }
-    .map_err(SyncError::WriteOutput)
+    }?;
+
+    Ok(())
 }
 
 async fn sync_with(
@@ -58,10 +59,7 @@ async fn sync_with(
     jira_url: &JiraUrl,
     jql: &JiraJql,
 ) -> Result<usize, SyncOperationError> {
-    let issues = fetcher
-        .fetch_issues(jql)
-        .await
-        .map_err(SyncOperationError::FetchIssues)?;
+    let issues = fetcher.fetch_issues(jql).await?;
     let issue_count = issues.len();
     let snapshot = Snapshot {
         metadata: SnapshotMetadata {
@@ -71,9 +69,7 @@ async fn sync_with(
         },
         issues,
     };
-    store
-        .save_snapshot(&snapshot)
-        .map_err(SyncOperationError::SaveSnapshot)?;
+    store.save_snapshot(&snapshot)?;
 
     Ok(issue_count)
 }
