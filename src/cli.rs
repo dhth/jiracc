@@ -44,16 +44,16 @@ enum Command {
         query: Option<String>,
 
         /// Match a Jira username; may be repeated
-        #[arg(short = 'a', long, value_name = "USERNAME")]
-        assignee: Vec<String>,
+        #[arg(short = 'a', long = "assignee", value_name = "USERNAME")]
+        assignees: Vec<String>,
 
         /// Match a Jira status; may be repeated
-        #[arg(short = 's', long, value_name = "STATUS")]
-        status: Vec<String>,
+        #[arg(short = 's', long = "status", value_name = "STATUS")]
+        statuses: Vec<String>,
 
         /// Match a Jira issue type; may be repeated
         #[arg(short = 't', long = "type", value_name = "TYPE")]
-        issue_type: Vec<String>,
+        issue_types: Vec<String>,
 
         /// Path to the configuration file
         #[arg(short = 'p', long, value_name = "PATH")]
@@ -93,15 +93,15 @@ impl From<Args> for application::Command {
             Command::Show { key, config_path } => Self::Show { key, config_path },
             Command::Search {
                 query,
-                assignee,
-                status,
-                issue_type,
+                assignees,
+                statuses,
+                issue_types,
                 config_path,
             } => Self::Search {
                 query,
-                assignees: assignee,
-                statuses: status,
-                issue_types: issue_type,
+                assignees,
+                statuses,
+                issue_types,
                 config_path,
             },
         }
