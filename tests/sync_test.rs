@@ -186,7 +186,7 @@ async fn a_jira_failure_preserves_the_existing_snapshot() -> anyhow::Result<()> 
         Error: couldn't fetch issues
 
         Caused by:
-            Jira search request failed with status 500 Internal Server Error
+            Jira request failed with HTTP status: 500 Internal Server Error
         ");
     })
     .await?;

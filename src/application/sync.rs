@@ -15,6 +15,9 @@ pub enum SyncError {
     #[error(transparent)]
     Config(#[from] config::ConfigError),
 
+    #[error("couldn't create Jira client")]
+    CreateJiraClient(#[from] JiraClientError),
+
     #[error(transparent)]
     Operation(#[from] SyncOperationError),
 
@@ -36,7 +39,7 @@ pub async fn sync(config_path: Option<PathBuf>) -> Result<(), SyncError> {
     let config_path = config_path.unwrap_or(paths.config);
     let loaded = config::load(&config_path)?;
     let jira = loaded.config.jira;
-    let fetcher = JiraClient::new(&jira.url, &jira.token);
+    let fetcher = JiraClient::new(&jira.url, &jira.token)?;
     let store = FileSnapshotStore::new(&paths.data, &loaded.path);
     let issue_count = sync_with(&fetcher, &store, &jira.url, &jira.jql).await?;
 

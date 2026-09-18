@@ -1,6 +1,13 @@
 use crate::domain::{Assignee, Issue, IssueReference};
 use serde::{Deserialize, Serialize};
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(super) struct CurrentUser {
+    pub name: String,
+    pub display_name: String,
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(super) struct SearchRequest<'a> {

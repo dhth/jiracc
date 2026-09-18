@@ -1,4 +1,4 @@
 mod client;
 mod dto;
 
-pub use client::{JiraClient, JiraClientError};
+pub use client::{JiraClient, JiraClientError, JiraUser};
