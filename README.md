@@ -120,7 +120,7 @@ OPS-42 — Rescue the president's daughter
 Type:       Task
 Status:     In Progress
 Assignee:   Leon S. Kennedy (@leon.kennedy)
-Updated:    2004-09-15T10:00:00.000+0000
+Updated:    2004-09-15T10:00:00.000+0000 (3d ago)
 Jira ID:    10042
 Parent:     OPS-40
 Subtasks:   OPS-43, OPS-44
