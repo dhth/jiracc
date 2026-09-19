@@ -4,6 +4,7 @@ use std::path::PathBuf;
 
 /// jiracc lets you access your JIRA issues offline
 #[derive(Debug, Parser)]
+#[command(version)]
 pub struct Args {
     #[command(subcommand)]
     command: Command,

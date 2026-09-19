@@ -29,8 +29,31 @@ fn shows_help() {
       help    Print this message or the help of the given subcommand(s)
 
     Options:
-      -h, --help  Print help
+      -h, --help     Print help
+      -V, --version  Print version
 
     ----- stderr -----
     ");
+}
+
+#[test]
+fn shows_version() {
+    // GIVEN
+    let fx = Fixture::new();
+    let mut cmd = fx.cmd(["--version"]);
+
+    // WHEN
+    // THEN
+    insta::with_settings!({
+        filters => vec![(r"jiracc \d+\.\d+\.\d+\S*", "jiracc [version]")]
+    }, {
+        assert_cmd_snapshot!(cmd, @"
+        success: true
+        exit_code: 0
+        ----- stdout -----
+        jiracc [version]
+
+        ----- stderr -----
+        ");
+    });
 }
