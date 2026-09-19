@@ -10,8 +10,8 @@ pub struct IssueFilter {
 
 #[derive(Debug, thiserror::Error)]
 pub enum IssueFilterError {
-    #[error("search query must not be empty")]
-    EmptyQuery,
+    #[error("'{property}' must not be empty")]
+    EmptyValue { property: &'static str },
 }
 
 impl IssueFilter {
@@ -21,22 +21,15 @@ impl IssueFilter {
         statuses: Vec<String>,
         issue_types: Vec<String>,
     ) -> Result<Self, IssueFilterError> {
-        let query = match query {
-            Some(query) => {
-                let query = query.trim();
-                if query.is_empty() {
-                    return Err(IssueFilterError::EmptyQuery);
-                }
-                Some(query.to_lowercase())
-            }
-            None => None,
-        };
+        let query = query
+            .map(|query| normalize_required_value(&query, "query"))
+            .transpose()?;
 
         Ok(Self {
             query,
-            assignee_usernames: normalize(assignee_usernames),
-            statuses: normalize(statuses),
-            issue_types: normalize(issue_types),
+            assignee_usernames: normalize_values(assignee_usernames, "assignee")?,
+            statuses: normalize_values(statuses, "status")?,
+            issue_types: normalize_values(issue_types, "issue type")?,
         })
     }
 
@@ -79,29 +72,43 @@ impl IssueFilter {
     }
 }
 
-fn normalize(values: Vec<String>) -> Vec<String> {
+fn normalize_values(
+    values: Vec<String>,
+    property: &'static str,
+) -> Result<Vec<String>, IssueFilterError> {
     let mut values = values
         .into_iter()
-        .map(|value| value.to_lowercase())
-        .collect::<Vec<_>>();
+        .map(|value| normalize_required_value(&value, property))
+        .collect::<Result<Vec<_>, _>>()?;
+
     values.sort_unstable();
     values.dedup();
-    values
+    Ok(values)
+}
+
+fn normalize_required_value(
+    value: &str,
+    property: &'static str,
+) -> Result<String, IssueFilterError> {
+    let value = value.trim().to_lowercase();
+    if value.is_empty() {
+        return Err(IssueFilterError::EmptyValue { property });
+    }
+
+    Ok(value)
 }
 
 fn contains(haystack: &str, needle: &str) -> bool {
     haystack.to_lowercase().contains(needle)
 }
 
-fn matches_any(allowed_values: &[String], candidate: &str) -> bool {
-    if allowed_values.is_empty() {
+fn matches_any(patterns: &[String], candidate: &str) -> bool {
+    if patterns.is_empty() {
         return true;
     }
 
     let candidate = candidate.to_lowercase();
-    allowed_values
-        .iter()
-        .any(|allowed_value| allowed_value == &candidate)
+    patterns.iter().any(|pattern| candidate.contains(pattern))
 }
 
 #[cfg(test)]
@@ -119,8 +126,8 @@ mod tests {
         let issue = test_issue();
         let test_cases = [
             ("key", "PROJ-42"),
-            ("summary", "connection timeout"),
-            ("description", "VPN reconnect"),
+            ("summary", "Investigate connection timeout"),
+            ("description", "Failures occur after a VPN reconnect."),
         ];
 
         for (name, query) in test_cases {
@@ -138,10 +145,54 @@ mod tests {
     }
 
     #[test]
-    fn query_is_trimmed_and_matched_case_insensitively() -> anyhow::Result<()> {
+    fn supplied_search_values_are_trimmed_and_matched_case_insensitively() -> anyhow::Result<()> {
+        // GIVEN
+        let test_cases = [
+            (
+                "query",
+                IssueFilter::new(
+                    Some("  INVESTIGATE CONNECTION TIMEOUT  ".to_owned()),
+                    Vec::new(),
+                    Vec::new(),
+                    Vec::new(),
+                )?,
+            ),
+            (
+                "assignee",
+                IssueFilter::new(None, strings(&["  ALICE.SMITH  "]), Vec::new(), Vec::new())?,
+            ),
+            (
+                "status",
+                IssueFilter::new(None, Vec::new(), strings(&["  IN PROGRESS  "]), Vec::new())?,
+            ),
+            (
+                "issue type",
+                IssueFilter::new(
+                    None,
+                    Vec::new(),
+                    Vec::new(),
+                    strings(&["  TECHNICAL STORY  "]),
+                )?,
+            ),
+        ];
+        let issue = test_issue();
+
+        for (name, filter) in test_cases {
+            // WHEN
+            let result = filter.matches(&issue);
+
+            // THEN
+            assert!(result, "test case: {name}");
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn query_is_matched_case_insensitively_for_non_ascii_text() -> anyhow::Result<()> {
         // GIVEN
         let filter = IssueFilter::new(
-            Some("  ÜBERPRÜFEN  ".to_owned()),
+            Some("ÜBERPRÜFEN".to_owned()),
             Vec::new(),
             Vec::new(),
             Vec::new(),
@@ -206,7 +257,7 @@ mod tests {
                     None,
                     Vec::new(),
                     Vec::new(),
-                    strings(&["Assignment", "Bug"]),
+                    strings(&["Assignment", "Story"]),
                 )?,
             ),
         ];
@@ -218,40 +269,6 @@ mod tests {
             // THEN
             assert!(result, "test case: {name}");
         }
-
-        Ok(())
-    }
-
-    #[test]
-    fn all_filter_categories_match_together() -> anyhow::Result<()> {
-        // GIVEN
-        let filter = IssueFilter::new(
-            Some("timeout".to_owned()),
-            strings(&["ALICE"]),
-            strings(&["IN PROGRESS"]),
-            strings(&["BUG"]),
-        )?;
-        let issue = test_issue();
-
-        // WHEN
-        let result = filter.matches(&issue);
-
-        // THEN
-        assert!(result);
-
-        Ok(())
-    }
-
-    #[test]
-    fn categorical_values_are_normalized_and_deduplicated() -> anyhow::Result<()> {
-        // GIVEN
-        let assignee_usernames = strings(&["bob", "ALICE", "alice"]);
-
-        // WHEN
-        let result = IssueFilter::new(None, assignee_usernames, Vec::new(), Vec::new())?;
-
-        // THEN
-        assert_eq!(result.assignee_usernames, strings(&["alice", "bob"]));
 
         Ok(())
     }
@@ -300,36 +317,108 @@ mod tests {
     }
 
     #[test]
-    fn categorical_filter_requires_an_exact_match() -> anyhow::Result<()> {
+    fn search_values_match_substrings() -> anyhow::Result<()> {
         // GIVEN
-        let filter = IssueFilter::new(None, Vec::new(), strings(&["Progress"]), Vec::new())?;
+        let test_cases = [
+            (
+                "query",
+                IssueFilter::new(
+                    Some("connection timeout".to_owned()),
+                    Vec::new(),
+                    Vec::new(),
+                    Vec::new(),
+                )?,
+            ),
+            (
+                "assignee",
+                IssueFilter::new(None, strings(&["alice"]), Vec::new(), Vec::new())?,
+            ),
+            (
+                "status",
+                IssueFilter::new(None, Vec::new(), strings(&["Progress"]), Vec::new())?,
+            ),
+            (
+                "issue type",
+                IssueFilter::new(None, Vec::new(), Vec::new(), strings(&["Story"]))?,
+            ),
+        ];
         let issue = test_issue();
 
-        // WHEN
-        let result = filter.matches(&issue);
+        for (name, filter) in test_cases {
+            // WHEN
+            let result = filter.matches(&issue);
 
-        // THEN
-        assert!(!result);
+            // THEN
+            assert!(result, "test case: {name}");
+        }
 
         Ok(())
     }
 
     #[test]
-    fn different_filter_categories_are_combined_with_and() -> anyhow::Result<()> {
+    fn search_criteria_are_combined_with_and() -> anyhow::Result<()> {
         // GIVEN
-        let filter = IssueFilter::new(
-            Some("timeout".to_owned()),
-            strings(&["alice"]),
-            strings(&["Open"]),
-            strings(&["Bug"]),
-        )?;
+        let test_cases = [
+            (
+                "all categories match",
+                IssueFilter::new(
+                    Some("Investigate connection timeout".to_owned()),
+                    strings(&["alice.smith"]),
+                    strings(&["In Progress"]),
+                    strings(&["Technical Story"]),
+                )?,
+                true,
+            ),
+            (
+                "query doesn't match",
+                IssueFilter::new(
+                    Some("database".to_owned()),
+                    strings(&["alice.smith"]),
+                    strings(&["In Progress"]),
+                    strings(&["Technical Story"]),
+                )?,
+                false,
+            ),
+            (
+                "assignee doesn't match",
+                IssueFilter::new(
+                    Some("Investigate connection timeout".to_owned()),
+                    strings(&["bob"]),
+                    strings(&["In Progress"]),
+                    strings(&["Technical Story"]),
+                )?,
+                false,
+            ),
+            (
+                "status doesn't match",
+                IssueFilter::new(
+                    Some("Investigate connection timeout".to_owned()),
+                    strings(&["alice.smith"]),
+                    strings(&["Done"]),
+                    strings(&["Technical Story"]),
+                )?,
+                false,
+            ),
+            (
+                "issue type doesn't match",
+                IssueFilter::new(
+                    Some("Investigate connection timeout".to_owned()),
+                    strings(&["alice.smith"]),
+                    strings(&["In Progress"]),
+                    strings(&["Bug"]),
+                )?,
+                false,
+            ),
+        ];
         let issue = test_issue();
 
-        // WHEN
-        let result = filter.matches(&issue);
+        for (name, filter, expected) in test_cases {
+            // WHEN
+            let result = filter.matches(&issue);
 
-        // THEN
-        assert!(!result);
+            // THEN
+            assert_eq!(result, expected, "test case: {name}");
+        }
 
         Ok(())
     }
@@ -396,7 +485,74 @@ mod tests {
 
             // THEN
             assert!(
-                matches!(result, Err(IssueFilterError::EmptyQuery)),
+                matches!(
+                    result,
+                    Err(IssueFilterError::EmptyValue { property: "query" })
+                ),
+                "test case: {name}"
+            );
+        }
+    }
+
+    #[test]
+    fn empty_categorical_value_fails() {
+        // GIVEN
+        let test_cases = [
+            (
+                "empty assignee",
+                "assignee",
+                strings(&["alice", ""]),
+                Vec::new(),
+                Vec::new(),
+            ),
+            (
+                "whitespace-only assignee",
+                "assignee",
+                strings(&["alice", "   "]),
+                Vec::new(),
+                Vec::new(),
+            ),
+            (
+                "empty status",
+                "status",
+                Vec::new(),
+                strings(&["Open", ""]),
+                Vec::new(),
+            ),
+            (
+                "whitespace-only status",
+                "status",
+                Vec::new(),
+                strings(&["Open", "   "]),
+                Vec::new(),
+            ),
+            (
+                "empty issue type",
+                "issue type",
+                Vec::new(),
+                Vec::new(),
+                strings(&["Bug", ""]),
+            ),
+            (
+                "whitespace-only issue type",
+                "issue type",
+                Vec::new(),
+                Vec::new(),
+                strings(&["Bug", "   "]),
+            ),
+        ];
+
+        for (name, expected_property, assignees, statuses, issue_types) in test_cases {
+            // WHEN
+            let result = IssueFilter::new(None, assignees, statuses, issue_types);
+
+            // THEN
+            assert!(
+                matches!(
+                    result,
+                    Err(IssueFilterError::EmptyValue { property })
+                        if property == expected_property
+                ),
                 "test case: {name}"
             );
         }
@@ -408,9 +564,9 @@ mod tests {
             key: "PROJ-42".to_owned(),
             summary: "Investigate connection timeout".to_owned(),
             status: "In Progress".to_owned(),
-            issue_type: "Bug".to_owned(),
+            issue_type: "Technical Story".to_owned(),
             assignee: Some(Assignee {
-                username: "alice".to_owned(),
+                username: "alice.smith".to_owned(),
                 display_name: "Alice Example".to_owned(),
             }),
             description: Some("Failures occur after a VPN reconnect.".to_owned()),
