@@ -6,7 +6,7 @@ use insta_cmd::assert_cmd_snapshot;
 use jiracc::config;
 use jiracc::domain::{Issue, Snapshot, SnapshotMetadata};
 use jiracc::persistence::FileSnapshotStore;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 const TOKEN_ENVIRONMENT_VARIABLE: &str = "JIRACC_STATUS_TEST_TOKEN";
 
@@ -33,22 +33,17 @@ impl TestContext {
         })
     }
 
-    fn status_command(&self, config_path: &Path) -> std::process::Command {
+    fn status_command(&self) -> std::process::Command {
         let mut command = self.fixture.cmd(["status", "-p"]);
         command
-            .arg(config_path)
+            .arg(&self.config_path)
             .env("XDG_DATA_HOME", &self.data_home)
             .env_remove(TOKEN_ENVIRONMENT_VARIABLE);
         command
     }
 
-    fn save_snapshot(
-        &self,
-        config_path: &Path,
-        issue_count: usize,
-        fetched_at: DateTime<Utc>,
-    ) -> anyhow::Result<()> {
-        let config_path = config::resolve_path(config_path)?;
+    fn save_snapshot(&self, issue_count: usize, fetched_at: DateTime<Utc>) -> anyhow::Result<()> {
+        let config_path = config::resolve_path(&self.config_path)?;
         let store = FileSnapshotStore::new(&self.data_home.join("jiracc"), &config_path);
         store.save_snapshot(&snapshot(issue_count, fetched_at))?;
 
@@ -87,8 +82,8 @@ fn reports_a_populated_snapshot() -> anyhow::Result<()> {
     let context = TestContext::new()?;
     let fetched_at =
         Utc::now() - TimeDelta::days(4) - TimeDelta::hours(14) - TimeDelta::minutes(30);
-    context.save_snapshot(&context.config_path, 5, fetched_at)?;
-    let mut cmd = context.status_command(&context.config_path);
+    context.save_snapshot(5, fetched_at)?;
+    let mut cmd = context.status_command();
 
     // WHEN
     // THEN
@@ -118,8 +113,8 @@ fn reports_an_empty_snapshot() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new()?;
     let fetched_at = Utc::now() - TimeDelta::minutes(24) - TimeDelta::seconds(30);
-    context.save_snapshot(&context.config_path, 0, fetched_at)?;
-    let mut cmd = context.status_command(&context.config_path);
+    context.save_snapshot(0, fetched_at)?;
+    let mut cmd = context.status_command();
 
     // WHEN
     // THEN
@@ -148,7 +143,7 @@ fn reports_an_empty_snapshot() -> anyhow::Result<()> {
 fn reports_an_absent_snapshot_successfully() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new()?;
-    let mut cmd = context.status_command(&context.config_path);
+    let mut cmd = context.status_command();
 
     // WHEN
     // THEN
