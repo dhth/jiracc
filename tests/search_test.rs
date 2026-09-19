@@ -137,7 +137,7 @@ async fn finds_and_prints_matched_issues() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context.seed_snapshot(SEARCH_RESPONSE_FIVE_ISSUES).await?;
-    let mut cmd = context.search_command(None);
+    let mut cmd = context.search_command(Some("connection timeout"));
     cmd.args(["--assignee", "alice", "--status", "Open", "--type", "Bug"]);
 
     // WHEN
@@ -281,7 +281,7 @@ fn rejects_an_explicitly_empty_query() {
     ----- stdout -----
 
     ----- stderr -----
-    Error: search query must not be empty
+    Error: 'query' must not be empty
     ");
 }
 
@@ -299,7 +299,7 @@ fn rejects_a_whitespace_only_query() {
     ----- stdout -----
 
     ----- stderr -----
-    Error: search query must not be empty
+    Error: 'query' must not be empty
     ");
 }
 
