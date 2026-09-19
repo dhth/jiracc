@@ -72,7 +72,13 @@ fn format_status(snapshot: &Snapshot, reference_time: DateTime<Utc>) -> String {
 
     format!(
         "{issue_count} {issue_label} cached
-Fetched: {fetched_at}"
+
+Fetched: {fetched_at}
+URL:     {jira_url}
+JQL:
+{jql}",
+        jira_url = snapshot.metadata.jira_url,
+        jql = snapshot.metadata.jql,
     )
 }
 
@@ -122,24 +128,39 @@ mod tests {
     use chrono::TimeDelta;
 
     #[test]
-    fn format_status_reports_issue_count_and_fetch_time() -> anyhow::Result<()> {
+    fn format_status_includes_snapshot_provenance() -> anyhow::Result<()> {
         let now = "2026-09-18T15:15:00Z".parse::<DateTime<Utc>>()?;
         let fetched_at = "2026-09-18T12:15:00Z".parse::<DateTime<Utc>>()?;
         let cases = [
             (
                 5,
                 "5 issues cached
-Fetched: 2026-09-18T12:15:00Z (3h ago)",
+
+Fetched: 2026-09-18T12:15:00Z (3h ago)
+URL:     https://jira.example.com
+JQL:
+project = TEST
+AND status = Open",
             ),
             (
                 1,
                 "1 issue cached
-Fetched: 2026-09-18T12:15:00Z (3h ago)",
+
+Fetched: 2026-09-18T12:15:00Z (3h ago)
+URL:     https://jira.example.com
+JQL:
+project = TEST
+AND status = Open",
             ),
             (
                 0,
                 "0 issues cached
-Fetched: 2026-09-18T12:15:00Z (3h ago)",
+
+Fetched: 2026-09-18T12:15:00Z (3h ago)
+URL:     https://jira.example.com
+JQL:
+project = TEST
+AND status = Open",
             ),
         ];
 
@@ -161,7 +182,12 @@ Fetched: 2026-09-18T12:15:00Z (3h ago)",
         assert_eq!(
             format_status(&snapshot(1, fetched_at), now),
             "1 issue cached
-Fetched: 2026-09-18T15:16:00Z"
+
+Fetched: 2026-09-18T15:16:00Z
+URL:     https://jira.example.com
+JQL:
+project = TEST
+AND status = Open"
         );
 
         Ok(())
@@ -208,7 +234,9 @@ Fetched: 2026-09-18T15:16:00Z"
             metadata: SnapshotMetadata {
                 fetched_at,
                 jira_url: "https://jira.example.com".to_owned(),
-                jql: "project = TEST".to_owned(),
+                jql: "project = TEST
+AND status = Open"
+                    .to_owned(),
             },
             issues: (0..issue_count).map(issue).collect(),
         }
