@@ -138,26 +138,33 @@ async fn shows_a_cached_issue_without_loading_the_config() -> anyhow::Result<()>
 
     // WHEN
     // THEN
-    assert_cmd_snapshot!(cmd, @"
-    success: true
-    exit_code: 0
-    ----- stdout -----
-    TEST-1 — Example issue
+    insta::with_settings!({
+        filters => vec![(
+            r"(Updated:    \S+) \([^\r\n]+ ago\)",
+            "$1 ([relative time])"
+        )]
+    }, {
+        assert_cmd_snapshot!(cmd, @"
+        success: true
+        exit_code: 0
+        ----- stdout -----
+        TEST-1 — Example issue
 
-    Type:       Task
-    Status:     In Progress
-    Assignee:   Alice Example (@alice)
-    Updated:    2026-09-15T10:00:00.000+0000
-    Jira ID:    10001
-    Parent:     TEST-0
-    Subtasks:   TEST-2
+        Type:       Task
+        Status:     In Progress
+        Assignee:   Alice Example (@alice)
+        Updated:    2026-09-15T10:00:00.000+0000 ([relative time])
+        Jira ID:    10001
+        Parent:     TEST-0
+        Subtasks:   TEST-2
 
-    Description
-    -----------
-    Example description
+        Description
+        -----------
+        Example description
 
-    ----- stderr -----
-    ");
+        ----- stderr -----
+        ");
+    });
 
     Ok(())
 }
