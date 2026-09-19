@@ -145,11 +145,12 @@ data from Jira.
 | `jiracc config validate` | Validate the configuration                        |
 | `jiracc auth check`      | Check the configured Jira credentials             |
 | `jiracc sync`            | Synchronize issues from Jira                      |
+| `jiracc status`          | Show information about the local issue cache      |
 | `jiracc search [QUERY]`  | Search or list cached issues                      |
 | `jiracc show ISSUE-KEY`  | Show the cached details of an issue               |
 | `jiracc help`            | Show all commands                                 |
 
-`auth check` and `sync` communicate with Jira. `search` and `show` only read the
-local snapshot. Commands that use a configuration file accept `--config-path`
-to use a file other than the default. Run `jiracc <command> --help` for command
-options and supported flags.
+`auth check` and `sync` communicate with Jira. `status`, `search`, and `show`
+only read the local issue cache. Commands that use a configuration file accept
+`--config-path` to use a file other than the default. Run
+`jiracc <command> --help` for command options and supported flags.

@@ -3,6 +3,7 @@ mod config;
 mod issue_filter;
 mod search;
 mod show;
+mod status;
 mod sync;
 
 use std::path::PathBuf;
@@ -12,12 +13,16 @@ pub use config::{InitConfigError, SampleConfigError, ValidateConfigError};
 pub use issue_filter::{IssueFilter, IssueFilterError};
 pub use search::{SearchError, SearchOperationError};
 pub use show::ShowError;
+pub use status::{StatusError, StatusOperationError};
 pub use sync::{SyncError, SyncOperationError, sync};
 
 pub enum Command {
     Auth(AuthCommand),
     Config(ConfigCommand),
     Sync {
+        config_path: Option<PathBuf>,
+    },
+    Status {
         config_path: Option<PathBuf>,
     },
     Show {
@@ -61,6 +66,9 @@ pub enum ApplicationError {
     Sync(#[from] SyncError),
 
     #[error(transparent)]
+    Status(#[from] StatusError),
+
+    #[error(transparent)]
     Show(#[from] ShowError),
 
     #[error(transparent)]
@@ -74,6 +82,7 @@ pub async fn run(command: Command) -> Result<(), ApplicationError> {
         Command::Config(ConfigCommand::Sample) => config::sample()?,
         Command::Config(ConfigCommand::Validate { config_path }) => config::validate(config_path)?,
         Command::Sync { config_path } => sync::sync(config_path).await?,
+        Command::Status { config_path } => status::status(config_path)?,
         Command::Show { key, config_path } => show::show(key, config_path)?,
         Command::Search {
             query,
