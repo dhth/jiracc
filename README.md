@@ -101,9 +101,10 @@ PLG-84  Story  In Progress  @jack.krauser     Settle unfinished business with Le
 PLG-90  Epic   In Progress  @osmund.saddler   Spread Las Plagas beyond the island
 ```
 
-A text query matches issue keys, summaries, and descriptions. Filters can be
-repeated; values within one filter are combined with OR, while different filters
-are combined with AND.
+A text query matches issue keys, summaries, and descriptions. Query and filter
+values use case-insensitive substring matching. Filters can be repeated; values
+within one filter are combined with OR, while different filters are combined
+with AND.
 
 ### Show an issue
 

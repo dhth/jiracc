@@ -137,7 +137,7 @@ async fn finds_and_prints_matched_issues() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
     context.seed_snapshot(SEARCH_RESPONSE_FIVE_ISSUES).await?;
-    let mut cmd = context.search_command(Some("connection timeout"));
+    let mut cmd = context.search_command(Some("connection"));
     cmd.args(["--assignee", "alice", "--status", "Open", "--type", "Bug"]);
 
     // WHEN
@@ -300,6 +300,24 @@ fn rejects_a_whitespace_only_query() {
 
     ----- stderr -----
     Error: 'query' must not be empty
+    ");
+}
+
+#[test]
+fn rejects_an_empty_issue_type() {
+    // GIVEN
+    let fixture = Fixture::new();
+    let mut cmd = fixture.cmd(["search", "--type", ""]);
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+
+    ----- stderr -----
+    Error: 'issue type' must not be empty
     ");
 }
 
