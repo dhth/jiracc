@@ -125,22 +125,30 @@ mod tests {
     fn format_status_reports_issue_count_and_fetch_time() -> anyhow::Result<()> {
         let now = "2026-09-18T15:15:00Z".parse::<DateTime<Utc>>()?;
         let fetched_at = "2026-09-18T12:15:00Z".parse::<DateTime<Utc>>()?;
+        let cases = [
+            (
+                5,
+                "5 issues cached
+Fetched: 2026-09-18T12:15:00Z (3h ago)",
+            ),
+            (
+                1,
+                "1 issue cached
+Fetched: 2026-09-18T12:15:00Z (3h ago)",
+            ),
+            (
+                0,
+                "0 issues cached
+Fetched: 2026-09-18T12:15:00Z (3h ago)",
+            ),
+        ];
 
-        assert_eq!(
-            format_status(&snapshot(147, fetched_at), now),
-            "147 issues cached
-Fetched: 2026-09-18T12:15:00Z (3h ago)"
-        );
-        assert_eq!(
-            format_status(&snapshot(1, fetched_at), now),
-            "1 issue cached
-Fetched: 2026-09-18T12:15:00Z (3h ago)"
-        );
-        assert_eq!(
-            format_status(&snapshot(0, fetched_at), now),
-            "0 issues cached
-Fetched: 2026-09-18T12:15:00Z (3h ago)"
-        );
+        for (issue_count, expected) in cases {
+            assert_eq!(
+                format_status(&snapshot(issue_count, fetched_at), now),
+                expected
+            );
+        }
 
         Ok(())
     }
