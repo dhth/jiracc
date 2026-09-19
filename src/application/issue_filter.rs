@@ -21,16 +21,9 @@ impl IssueFilter {
         statuses: Vec<String>,
         issue_types: Vec<String>,
     ) -> Result<Self, IssueFilterError> {
-        let query = match query {
-            Some(query) => {
-                let query = normalize_filter_value(&query);
-                if query.is_empty() {
-                    return Err(IssueFilterError::EmptyValue { property: "query" });
-                }
-                Some(query)
-            }
-            None => None,
-        };
+        let query = query
+            .map(|query| normalize_required_value(&query, "query"))
+            .transpose()?;
 
         Ok(Self {
             query,
@@ -85,35 +78,37 @@ fn normalize_values(
 ) -> Result<Vec<String>, IssueFilterError> {
     let mut values = values
         .into_iter()
-        .map(|value| normalize_filter_value(&value))
-        .collect::<Vec<_>>();
-
-    if values.iter().any(String::is_empty) {
-        return Err(IssueFilterError::EmptyValue { property });
-    }
+        .map(|value| normalize_required_value(&value, property))
+        .collect::<Result<Vec<_>, _>>()?;
 
     values.sort_unstable();
     values.dedup();
     Ok(values)
 }
 
-fn normalize_filter_value(value: &str) -> String {
-    value.trim().to_lowercase()
+fn normalize_required_value(
+    value: &str,
+    property: &'static str,
+) -> Result<String, IssueFilterError> {
+    let value = value.trim().to_lowercase();
+    if value.is_empty() {
+        return Err(IssueFilterError::EmptyValue { property });
+    }
+
+    Ok(value)
 }
 
 fn contains(haystack: &str, needle: &str) -> bool {
     haystack.to_lowercase().contains(needle)
 }
 
-fn matches_any(allowed_values: &[String], candidate: &str) -> bool {
-    if allowed_values.is_empty() {
+fn matches_any(patterns: &[String], candidate: &str) -> bool {
+    if patterns.is_empty() {
         return true;
     }
 
     let candidate = candidate.to_lowercase();
-    allowed_values
-        .iter()
-        .any(|allowed_value| candidate.contains(allowed_value))
+    patterns.iter().any(|pattern| candidate.contains(pattern))
 }
 
 #[cfg(test)]
@@ -156,7 +151,7 @@ mod tests {
             (
                 "query",
                 IssueFilter::new(
-                    Some("  CONNECTION TIMEOUT  ".to_owned()),
+                    Some("  INVESTIGATE CONNECTION TIMEOUT  ".to_owned()),
                     Vec::new(),
                     Vec::new(),
                     Vec::new(),
@@ -164,15 +159,20 @@ mod tests {
             ),
             (
                 "assignee",
-                IssueFilter::new(None, strings(&["  ALICE  "]), Vec::new(), Vec::new())?,
+                IssueFilter::new(None, strings(&["  ALICE.SMITH  "]), Vec::new(), Vec::new())?,
             ),
             (
                 "status",
-                IssueFilter::new(None, Vec::new(), strings(&["  PROGRESS  "]), Vec::new())?,
+                IssueFilter::new(None, Vec::new(), strings(&["  IN PROGRESS  "]), Vec::new())?,
             ),
             (
                 "issue type",
-                IssueFilter::new(None, Vec::new(), Vec::new(), strings(&["  STORY  "]))?,
+                IssueFilter::new(
+                    None,
+                    Vec::new(),
+                    Vec::new(),
+                    strings(&["  TECHNICAL STORY  "]),
+                )?,
             ),
         ];
         let issue = test_issue();
@@ -184,6 +184,27 @@ mod tests {
             // THEN
             assert!(result, "test case: {name}");
         }
+
+        Ok(())
+    }
+
+    #[test]
+    fn query_is_matched_case_insensitively_for_non_ascii_text() -> anyhow::Result<()> {
+        // GIVEN
+        let filter = IssueFilter::new(
+            Some("ÜBERPRÜFEN".to_owned()),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+        )?;
+        let mut issue = test_issue();
+        issue.summary = "Verbindung überprüfen".to_owned();
+
+        // WHEN
+        let result = filter.matches(&issue);
+
+        // THEN
+        assert!(result);
 
         Ok(())
     }
