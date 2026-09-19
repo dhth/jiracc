@@ -151,7 +151,7 @@ fn reports_an_absent_snapshot_successfully() -> anyhow::Result<()> {
     success: true
     exit_code: 0
     ----- stdout -----
-    No local issue cache found.
+    No local issue cache found
 
     ----- stderr -----
     ");

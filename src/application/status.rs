@@ -49,7 +49,7 @@ where
 {
     let status = match store.get_snapshot() {
         Ok(snapshot) => format_status(&snapshot, reference_time),
-        Err(FileSnapshotStoreError::SnapshotNotFound) => "No local issue cache found.".to_owned(),
+        Err(FileSnapshotStoreError::SnapshotNotFound) => "No local issue cache found".to_owned(),
         Err(error) => return Err(error.into()),
     };
 
