@@ -98,7 +98,13 @@ fn reports_a_populated_snapshot() -> anyhow::Result<()> {
         exit_code: 0
         ----- stdout -----
         5 issues cached
+
         Fetched: [timestamp] (4d 14h ago)
+        URL:     https://cached-jira.example.com
+        JQL:
+        project = CACHED
+        AND status = Open
+        ORDER BY updated DESC
 
         ----- stderr -----
         ");
@@ -129,7 +135,13 @@ fn reports_an_empty_snapshot() -> anyhow::Result<()> {
         exit_code: 0
         ----- stdout -----
         0 issues cached
+
         Fetched: [timestamp] (24m ago)
+        URL:     https://cached-jira.example.com
+        JQL:
+        project = CACHED
+        AND status = Open
+        ORDER BY updated DESC
 
         ----- stderr -----
         ");
@@ -163,8 +175,11 @@ fn snapshot(issue_count: usize, fetched_at: DateTime<Utc>) -> Snapshot {
     Snapshot {
         metadata: SnapshotMetadata {
             fetched_at,
-            jira_url: "https://jira.example.com".to_owned(),
-            jql: "project = TEST".to_owned(),
+            jira_url: "https://cached-jira.example.com".to_owned(),
+            jql: "project = CACHED
+AND status = Open
+ORDER BY updated DESC"
+                .to_owned(),
         },
         issues: (0..issue_count).map(issue).collect(),
     }
