@@ -1,0 +1,5 @@
+worktree_dir: ..
+worktree_prefix: jiracc-
+
+post_create:
+  - mise trust .
