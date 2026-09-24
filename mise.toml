@@ -1,10 +1,11 @@
 [settings]
-idiomatic_version_file_enable_tools = ["rust"]
 task.run_auto_install = false
 
 [tools]
 actionlint = "latest"
 cargo-insta = "latest"
+mr-boxington = "latest"
+rust = { version = "1.98.1", components = "clippy,rustfmt", profile = "minimal", mr_boxington = true }
 yamlfmt = "latest"
 
 [tasks.all]
