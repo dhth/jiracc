@@ -45,9 +45,14 @@ pub fn search(
     let store = FileSnapshotStore::new(&paths.data, &config_path);
     let mut stdout = std::io::stdout().lock();
 
-    search_with(&store, &mut stdout, &filter)?;
-
-    Ok(())
+    match search_with(&store, &mut stdout, &filter) {
+        Err(SearchOperationError::WriteOutput(error))
+            if error.kind() == std::io::ErrorKind::BrokenPipe =>
+        {
+            Ok(())
+        }
+        result => result.map_err(SearchError::Operation),
+    }
 }
 
 fn search_with<W>(

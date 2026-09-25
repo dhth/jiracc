@@ -171,6 +171,57 @@ async fn shows_a_cached_issue_without_loading_the_config() -> anyhow::Result<()>
 
 #[cfg(unix)]
 #[tokio::test]
+async fn exits_quietly_when_stdout_pipe_has_no_reader() -> anyhow::Result<()> {
+    // GIVEN
+    let context = TestContext::new().await?;
+    context.seed_snapshot().await?;
+    let (reader, writer) = std::io::pipe()?;
+    drop(reader);
+    let mut cmd = context.show_command("TEST-1");
+    cmd.stdout(writer);
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
+
+#[cfg(target_os = "linux")]
+#[tokio::test]
+async fn reports_stdout_write_error_when_device_is_full() -> anyhow::Result<()> {
+    // GIVEN
+    let context = TestContext::new().await?;
+    context.seed_snapshot().await?;
+    let full = std::fs::OpenOptions::new().write(true).open("/dev/full")?;
+    let mut cmd = context.show_command("TEST-1");
+    cmd.stdout(full);
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+
+    ----- stderr -----
+    Error: couldn't write issue details to stdout
+
+    Caused by:
+        No space left on device (os error 28)
+    ");
+
+    Ok(())
+}
+
+#[cfg(unix)]
+#[tokio::test]
 async fn reports_an_unknown_issue() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;

@@ -39,9 +39,10 @@ pub fn show(key: String, config_path: Option<PathBuf>) -> Result<(), ShowError> 
 
     let output = format_issue(&issue, Utc::now());
     let mut stdout = std::io::stdout().lock();
-    writeln!(stdout, "{output}")?;
-
-    Ok(())
+    match writeln!(stdout, "{output}") {
+        Err(error) if error.kind() == std::io::ErrorKind::BrokenPipe => Ok(()),
+        result => result.map_err(ShowError::WriteOutput),
+    }
 }
 
 fn format_issue(issue: &Issue, reference_time: DateTime<Utc>) -> String {
