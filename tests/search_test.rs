@@ -244,6 +244,30 @@ async fn lists_all_cached_issues_without_criteria() -> anyhow::Result<()> {
 
 #[cfg(unix)]
 #[tokio::test]
+async fn exits_quietly_when_stdout_pipe_has_no_reader() -> anyhow::Result<()> {
+    // GIVEN
+    let context = TestContext::new().await?;
+    context.seed_snapshot(SEARCH_RESPONSE_FIVE_ISSUES).await?;
+    let (reader, writer) = std::io::pipe()?;
+    drop(reader);
+    let mut cmd = context.search_command(None);
+    cmd.stdout(writer);
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+
+    ----- stderr -----
+    ");
+
+    Ok(())
+}
+
+#[cfg(unix)]
+#[tokio::test]
 async fn prints_nothing_when_the_snapshot_is_empty() -> anyhow::Result<()> {
     // GIVEN
     let context = TestContext::new().await?;
@@ -319,6 +343,33 @@ fn rejects_an_empty_issue_type() {
     ----- stderr -----
     Error: 'issue type' must not be empty
     ");
+}
+
+#[cfg(target_os = "linux")]
+#[tokio::test]
+async fn reports_stdout_write_error_when_device_is_full() -> anyhow::Result<()> {
+    // GIVEN
+    let context = TestContext::new().await?;
+    context.seed_snapshot(SEARCH_RESPONSE_FIVE_ISSUES).await?;
+    let full = std::fs::OpenOptions::new().write(true).open("/dev/full")?;
+    let mut cmd = context.search_command(None);
+    cmd.stdout(full);
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+
+    ----- stderr -----
+    Error: couldn't write search results to stdout
+
+    Caused by:
+        No space left on device (os error 28)
+    ");
+
+    Ok(())
 }
 
 #[cfg(unix)]
