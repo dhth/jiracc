@@ -35,9 +35,14 @@ pub fn status(config_path: Option<PathBuf>) -> Result<(), StatusError> {
     let store = FileSnapshotStore::new(&paths.data, &config_path);
     let mut stdout = std::io::stdout().lock();
 
-    status_with(&store, &mut stdout, Utc::now())?;
-
-    Ok(())
+    match status_with(&store, &mut stdout, Utc::now()) {
+        Err(StatusOperationError::WriteOutput(error))
+            if error.kind() == std::io::ErrorKind::BrokenPipe =>
+        {
+            Ok(())
+        }
+        result => result.map_err(StatusError::Operation),
+    }
 }
 
 fn status_with<W>(

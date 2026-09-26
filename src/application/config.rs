@@ -91,22 +91,23 @@ pub fn init() -> Result<(), InitConfigError> {
             source,
         })?;
 
-    writeln!(
+    match writeln!(
         std::io::stdout().lock(),
         "Created sample configuration at {}.
 
 Edit it to match your Jira setup.",
         config_path.display()
-    )
-    .map_err(InitConfigError::WriteOutput)
+    ) {
+        Err(error) if error.kind() == std::io::ErrorKind::BrokenPipe => Ok(()),
+        result => result.map_err(InitConfigError::WriteOutput),
+    }
 }
 
 pub fn sample() -> Result<(), SampleConfigError> {
-    std::io::stdout()
-        .lock()
-        .write_all(SAMPLE_CONFIG.as_bytes())?;
-
-    Ok(())
+    match std::io::stdout().lock().write_all(SAMPLE_CONFIG.as_bytes()) {
+        Err(error) if error.kind() == std::io::ErrorKind::BrokenPipe => Ok(()),
+        result => result.map_err(SampleConfigError::Write),
+    }
 }
 
 pub fn validate(config_path: Option<PathBuf>) -> Result<(), ValidateConfigError> {
@@ -117,9 +118,11 @@ pub fn validate(config_path: Option<PathBuf>) -> Result<(), ValidateConfigError>
 
     crate::config::load(&config_path)?;
 
-    std::io::stdout()
+    match std::io::stdout()
         .lock()
-        .write_all(VALID_CONFIG_MESSAGE.as_bytes())?;
-
-    Ok(())
+        .write_all(VALID_CONFIG_MESSAGE.as_bytes())
+    {
+        Err(error) if error.kind() == std::io::ErrorKind::BrokenPipe => Ok(()),
+        result => result.map_err(ValidateConfigError::Write),
+    }
 }

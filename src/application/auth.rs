@@ -29,13 +29,14 @@ pub async fn check(config_path: Option<PathBuf>) -> Result<(), CheckAuthError> {
     let client = JiraClient::new(&jira.url, &jira.token)?;
     let user = client.get_current_user().await?;
 
-    writeln!(
+    match writeln!(
         std::io::stdout().lock(),
         "Authenticated to {} as {} ({}).",
         jira.url.as_str(),
         user.display_name,
         user.username
-    )?;
-
-    Ok(())
+    ) {
+        Err(error) if error.kind() == std::io::ErrorKind::BrokenPipe => Ok(()),
+        result => result.map_err(CheckAuthError::WriteOutput),
+    }
 }
