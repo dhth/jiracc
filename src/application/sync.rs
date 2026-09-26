@@ -44,13 +44,16 @@ pub async fn sync(config_path: Option<PathBuf>) -> Result<(), SyncError> {
     let issue_count = sync_with(&fetcher, &store, &jira.url, &jira.jql).await?;
 
     let mut stdout = std::io::stdout().lock();
-    match issue_count {
+    let result = match issue_count {
         0 => writeln!(stdout, "No issues found."),
         1 => writeln!(stdout, "Synchronized 1 issue."),
         _ => writeln!(stdout, "Synchronized {issue_count} issues."),
-    }?;
+    };
 
-    Ok(())
+    match result {
+        Err(error) if error.kind() == std::io::ErrorKind::BrokenPipe => Ok(()),
+        result => result.map_err(SyncError::WriteOutput),
+    }
 }
 
 async fn sync_with(
