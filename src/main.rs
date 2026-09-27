@@ -16,11 +16,17 @@ async fn main() -> ExitCode {
             let report = anyhow::Error::new(error);
             eprintln!("Error: {report:?}");
             if let Some(follow_up) = presentation.follow_up {
-                eprintln!("\n{follow_up}");
+                eprintln!(
+                    "
+{follow_up}"
+                );
             }
             if presentation.unexpected {
                 eprintln!(
-                    "\n---\n\nThis error is unexpected. Please check if there's an open issue for this on https://github.com/dhth/jiracc/issues. Create one if it doesn't exist."
+                    "
+---
+
+This error is unexpected. Please check if there's an open issue for this on https://github.com/dhth/jiracc/issues. Create one if it doesn't exist."
                 );
             }
             ExitCode::FAILURE
