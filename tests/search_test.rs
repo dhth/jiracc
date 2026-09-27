@@ -388,6 +388,8 @@ async fn reports_a_missing_snapshot() -> anyhow::Result<()> {
 
     ----- stderr -----
     Error: no cached snapshot exists for this configuration
+
+    Run 'jiracc sync' first to cache Jira issues locally.
     ");
 
     Ok(())

@@ -237,6 +237,8 @@ async fn reports_an_unknown_issue() -> anyhow::Result<()> {
 
     ----- stderr -----
     Error: issue TEST-99 was not found in the cached snapshot
+
+    Run 'jiracc sync' to refresh the cache. If the issue is still missing, check whether your configured JQL includes it.
     ");
 
     Ok(())
@@ -258,6 +260,8 @@ async fn reports_a_missing_snapshot() -> anyhow::Result<()> {
 
     ----- stderr -----
     Error: no cached snapshot exists for this configuration
+
+    Run 'jiracc sync' first to cache Jira issues locally.
     ");
 
     Ok(())
@@ -290,6 +294,8 @@ async fn reports_a_malformed_snapshot() -> anyhow::Result<()> {
 
         Caused by:
             expected ident at line 1 column 2
+
+        Run 'jiracc sync' to rebuild the local cache.
         ");
     });
 

@@ -197,6 +197,79 @@ async fn a_jira_failure_preserves_the_existing_snapshot() -> anyhow::Result<()> 
     Ok(())
 }
 
+#[cfg(unix)]
+#[tokio::test]
+async fn an_invalid_jira_response_is_reported_as_unexpected() -> anyhow::Result<()> {
+    let context = TestContext::new().await?;
+    context
+        .mount_search(ResponseTemplate::new(200).set_body_json(json!({
+            "startAt": 0,
+            "maxResults": 100,
+            "total": 1,
+            "issues": 42,
+        })))
+        .await;
+    let mut cmd = context.sync_command();
+
+    tokio::task::spawn_blocking(move || {
+        assert_cmd_snapshot!(cmd, @"
+        success: false
+        exit_code: 1
+        ----- stdout -----
+
+        ----- stderr -----
+        Error: couldn't fetch issues
+
+        Caused by:
+            0: failed to decode response from Jira
+            1: invalid type: integer `42`, expected a sequence at line 1 column 12
+
+        ---
+
+        This error is unexpected. Please check if there's an open issue for this on https://github.com/dhth/jiracc/issues. Create one if it doesn't exist.
+        ");
+    })
+    .await?;
+
+    Ok(())
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn an_invalid_jira_page_is_reported_as_unexpected() -> anyhow::Result<()> {
+    let context = TestContext::new().await?;
+    context
+        .mount_search(ResponseTemplate::new(200).set_body_json(json!({
+            "startAt": 1,
+            "maxResults": 100,
+            "total": 1,
+            "issues": [],
+        })))
+        .await;
+    let mut cmd = context.sync_command();
+
+    tokio::task::spawn_blocking(move || {
+        assert_cmd_snapshot!(cmd, @"
+        success: false
+        exit_code: 1
+        ----- stdout -----
+
+        ----- stderr -----
+        Error: couldn't fetch issues
+
+        Caused by:
+            Jira returned page start 1 when 0 was requested
+
+        ---
+
+        This error is unexpected. Please check if there's an open issue for this on https://github.com/dhth/jiracc/issues. Create one if it doesn't exist.
+        ");
+    })
+    .await?;
+
+    Ok(())
+}
+
 fn search_response(body: &str) -> ResponseTemplate {
     ResponseTemplate::new(200).set_body_raw(body, "application/json")
 }

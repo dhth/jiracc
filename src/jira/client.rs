@@ -42,8 +42,11 @@ pub enum JiraClientError {
     #[error("Jira request failed with HTTP status: {status}")]
     ResponseStatus { status: StatusCode },
 
+    #[error("failed to read response body from Jira")]
+    ReadResponseBody(#[source] reqwest::Error),
+
     #[error("failed to decode response from Jira")]
-    Decode(#[source] reqwest::Error),
+    Decode(#[source] serde_json::Error),
 
     #[error("Jira returned page start {received} when {requested} was requested")]
     UnexpectedPageStart { requested: usize, received: usize },
@@ -83,10 +86,11 @@ impl JiraClient {
             return Err(JiraClientError::ResponseStatus { status });
         }
 
-        let user = response
-            .json::<CurrentUser>()
+        let body = response
+            .bytes()
             .await
-            .map_err(JiraClientError::Decode)?;
+            .map_err(JiraClientError::ReadResponseBody)?;
+        let user: CurrentUser = serde_json::from_slice(&body).map_err(JiraClientError::Decode)?;
 
         Ok(JiraUser {
             username: user.name,
@@ -139,7 +143,11 @@ impl JiraClient {
             return Err(JiraClientError::ResponseStatus { status });
         }
 
-        response.json().await.map_err(JiraClientError::Decode)
+        let body = response
+            .bytes()
+            .await
+            .map_err(JiraClientError::ReadResponseBody)?;
+        serde_json::from_slice(&body).map_err(JiraClientError::Decode)
     }
 }
 

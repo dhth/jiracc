@@ -193,8 +193,11 @@ async fn reports_an_unexpected_jira_response() -> anyhow::Result<()> {
 
         Caused by:
             0: failed to decode response from Jira
-            1: error decoding response body
-            2: missing field `displayName` at line 1 column 16
+            1: missing field `displayName` at line 1 column 16
+
+        ---
+
+        This error is unexpected. Please check if there's an open issue for this on https://github.com/dhth/jiracc/issues. Create one if it doesn't exist.
         ");
     })
     .await?;
