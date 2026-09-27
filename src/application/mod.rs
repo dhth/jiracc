@@ -109,9 +109,11 @@ impl ApplicationError {
                 ..
             })) => (false, Some("Run 'jiracc sync' to rebuild the local cache.")),
             Self::CheckAuth(CheckAuthError::Jira(JiraClientError::BuildClient(_)))
+            | Self::CheckAuth(CheckAuthError::Jira(JiraClientError::Decode(_)))
             | Self::Sync(SyncError::CreateJiraClient(JiraClientError::BuildClient(_)))
             | Self::Sync(SyncError::Operation(SyncOperationError::FetchIssues(
-                JiraClientError::UnexpectedPageStart { .. }
+                JiraClientError::Decode(_)
+                | JiraClientError::UnexpectedPageStart { .. }
                 | JiraClientError::ZeroPageSize { .. }
                 | JiraClientError::PageOffsetOverflow { .. },
             )))
