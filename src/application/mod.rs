@@ -7,6 +7,8 @@ mod show;
 mod status;
 mod sync;
 
+use crate::jira::JiraClientError;
+use crate::persistence::FileSnapshotStoreError;
 use std::path::PathBuf;
 
 pub use auth::CheckAuthError;
@@ -74,6 +76,56 @@ pub enum ApplicationError {
 
     #[error(transparent)]
     Search(#[from] SearchError),
+}
+
+pub struct ErrorPresentation {
+    pub unexpected: bool,
+    pub follow_up: Option<&'static str>,
+}
+
+impl ApplicationError {
+    pub fn presentation(&self) -> ErrorPresentation {
+        let (unexpected, follow_up) = match self {
+            Self::Search(SearchError::Operation(SearchOperationError::LoadSnapshot(
+                FileSnapshotStoreError::SnapshotNotFound,
+            )))
+            | Self::Show(ShowError::Store(FileSnapshotStoreError::SnapshotNotFound)) => (
+                false,
+                Some("Run 'jiracc sync' first to cache Jira issues locally."),
+            ),
+            Self::Show(ShowError::IssueNotFound { .. }) => (
+                false,
+                Some(
+                    "Run 'jiracc sync' to refresh the cache. If the issue is still missing, check whether your configured JQL includes it.",
+                ),
+            ),
+            Self::Status(StatusError::Operation(StatusOperationError::LoadSnapshot(
+                FileSnapshotStoreError::DeserializeSnapshot { .. },
+            )))
+            | Self::Search(SearchError::Operation(SearchOperationError::LoadSnapshot(
+                FileSnapshotStoreError::DeserializeSnapshot { .. },
+            )))
+            | Self::Show(ShowError::Store(FileSnapshotStoreError::DeserializeSnapshot {
+                ..
+            })) => (false, Some("Run 'jiracc sync' to rebuild the local cache.")),
+            Self::CheckAuth(CheckAuthError::Jira(JiraClientError::BuildClient(_)))
+            | Self::Sync(SyncError::CreateJiraClient(JiraClientError::BuildClient(_)))
+            | Self::Sync(SyncError::Operation(SyncOperationError::FetchIssues(
+                JiraClientError::UnexpectedPageStart { .. }
+                | JiraClientError::ZeroPageSize { .. }
+                | JiraClientError::PageOffsetOverflow { .. },
+            )))
+            | Self::Sync(SyncError::Operation(SyncOperationError::SaveSnapshot(
+                FileSnapshotStoreError::Serialize(_),
+            ))) => (true, None),
+            _ => (false, None),
+        };
+
+        ErrorPresentation {
+            unexpected,
+            follow_up,
+        }
+    }
 }
 
 pub async fn run(command: Command) -> Result<(), ApplicationError> {
