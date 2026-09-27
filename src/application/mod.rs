@@ -85,19 +85,40 @@ pub struct ErrorPresentation {
 
 impl ApplicationError {
     pub fn presentation(&self) -> ErrorPresentation {
-        let (unexpected, follow_up) = match self {
+        ErrorPresentation {
+            unexpected: self.is_unexpected(),
+            follow_up: self.follow_up(),
+        }
+    }
+
+    fn is_unexpected(&self) -> bool {
+        matches!(
+            self,
+            Self::CheckAuth(CheckAuthError::Jira(JiraClientError::BuildClient(_)))
+                | Self::CheckAuth(CheckAuthError::Jira(JiraClientError::Decode(_)))
+                | Self::Sync(SyncError::CreateJiraClient(JiraClientError::BuildClient(_)))
+                | Self::Sync(SyncError::Operation(SyncOperationError::FetchIssues(
+                    JiraClientError::Decode(_)
+                        | JiraClientError::UnexpectedPageStart { .. }
+                        | JiraClientError::ZeroPageSize { .. }
+                        | JiraClientError::PageOffsetOverflow { .. }
+                )))
+                | Self::Sync(SyncError::Operation(SyncOperationError::SaveSnapshot(
+                    FileSnapshotStoreError::Serialize(_),
+                )))
+        )
+    }
+
+    fn follow_up(&self) -> Option<&'static str> {
+        match self {
             Self::Search(SearchError::Operation(SearchOperationError::LoadSnapshot(
                 FileSnapshotStoreError::SnapshotNotFound,
             )))
-            | Self::Show(ShowError::Store(FileSnapshotStoreError::SnapshotNotFound)) => (
-                false,
-                Some("Run 'jiracc sync' first to cache Jira issues locally."),
-            ),
-            Self::Show(ShowError::IssueNotFound { .. }) => (
-                false,
-                Some(
-                    "Run 'jiracc sync' to refresh the cache. If the issue is still missing, check whether your configured JQL includes it.",
-                ),
+            | Self::Show(ShowError::Store(FileSnapshotStoreError::SnapshotNotFound)) => {
+                Some("Run 'jiracc sync' first to cache Jira issues locally.")
+            }
+            Self::Show(ShowError::IssueNotFound { .. }) => Some(
+                "Run 'jiracc sync' to refresh the cache. If the issue is still missing, check whether your configured JQL includes it.",
             ),
             Self::Status(StatusError::Operation(StatusOperationError::LoadSnapshot(
                 FileSnapshotStoreError::DeserializeSnapshot { .. },
@@ -107,25 +128,8 @@ impl ApplicationError {
             )))
             | Self::Show(ShowError::Store(FileSnapshotStoreError::DeserializeSnapshot {
                 ..
-            })) => (false, Some("Run 'jiracc sync' to rebuild the local cache.")),
-            Self::CheckAuth(CheckAuthError::Jira(JiraClientError::BuildClient(_)))
-            | Self::CheckAuth(CheckAuthError::Jira(JiraClientError::Decode(_)))
-            | Self::Sync(SyncError::CreateJiraClient(JiraClientError::BuildClient(_)))
-            | Self::Sync(SyncError::Operation(SyncOperationError::FetchIssues(
-                JiraClientError::Decode(_)
-                | JiraClientError::UnexpectedPageStart { .. }
-                | JiraClientError::ZeroPageSize { .. }
-                | JiraClientError::PageOffsetOverflow { .. },
-            )))
-            | Self::Sync(SyncError::Operation(SyncOperationError::SaveSnapshot(
-                FileSnapshotStoreError::Serialize(_),
-            ))) => (true, None),
-            _ => (false, None),
-        };
-
-        ErrorPresentation {
-            unexpected,
-            follow_up,
+            })) => Some("Run 'jiracc sync' to rebuild the local cache."),
+            _ => None,
         }
     }
 }
