@@ -31,7 +31,6 @@ jobs:
               - "**/*.rs"
               - Cargo.*
               - clippy.toml
-              - rust-toolchain.toml
               - mise.toml
               - mise.lock
               - ".github/workflows/main.yml"
@@ -54,7 +53,7 @@ jobs:
       - name: Set up mise
         uses: jdx/mise-action@v4
         with:
-          install_args: rust
+          install_args: rust mr-boxington
       - name: Set up Rust cache
         uses: Swatinem/rust-cache@v2
         with:
@@ -76,7 +75,7 @@ jobs:
       - name: Set up mise
         uses: jdx/mise-action@v4
         with:
-          install_args: rust
+          install_args: rust mr-boxington
       - name: Set up Rust cache
         uses: Swatinem/rust-cache@v2
         with:
@@ -96,7 +95,7 @@ jobs:
       - name: Set up mise
         uses: jdx/mise-action@v4
         with:
-          install_args: rust
+          install_args: rust mr-boxington
       - name: Set up Rust cache
         uses: Swatinem/rust-cache@v2
         with:
