@@ -56,6 +56,8 @@ jobs:
           install_args: rust mr-boxington
       - name: Set up mr-boxington
         uses: jdx/mr-boxington-action@v1
+        with:
+          cache-generation: ${{ github.job }}
       - name: Check formatting
         run: mise run fmt:check
       - name: Lint
@@ -76,6 +78,8 @@ jobs:
           install_args: rust mr-boxington
       - name: Set up mr-boxington
         uses: jdx/mr-boxington-action@v1
+        with:
+          cache-generation: ${{ github.job }}
       - name: Build
         run: mise run build
 
@@ -94,6 +98,8 @@ jobs:
           install_args: rust mr-boxington
       - name: Set up mr-boxington
         uses: jdx/mr-boxington-action@v1
+        with:
+          cache-generation: ${{ github.job }}
       - name: Run tests
         run: mise run test
 
