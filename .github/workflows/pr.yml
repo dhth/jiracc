@@ -81,9 +81,6 @@ jobs:
           cache-key-suffix: ${{ github.job }}
       - name: Build
         run: mise run build
-      - name: Explain mbx cache misses
-        run: mise exec -- mbx explain --last
-        continue-on-error: true
 
   test:
     needs: changes
