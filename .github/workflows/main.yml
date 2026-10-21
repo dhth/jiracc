@@ -57,7 +57,7 @@ jobs:
       - name: Set up mr-boxington
         uses: jdx/mr-boxington-action@v1
         with:
-          cache-generation: ${{ github.job }}
+          cache-key-suffix: ${{ github.job }}
       - name: Check formatting
         run: mise run fmt:check
       - name: Lint
@@ -79,7 +79,7 @@ jobs:
       - name: Set up mr-boxington
         uses: jdx/mr-boxington-action@v1
         with:
-          cache-generation: ${{ github.job }}
+          cache-key-suffix: ${{ github.job }}
       - name: Build
         run: mise run build
 
@@ -99,7 +99,7 @@ jobs:
       - name: Set up mr-boxington
         uses: jdx/mr-boxington-action@v1
         with:
-          cache-generation: ${{ github.job }}
+          cache-key-suffix: ${{ github.job }}
       - name: Run tests
         run: mise run test
 
