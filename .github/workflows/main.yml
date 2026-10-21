@@ -51,13 +51,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Set up mise
-        uses: jdx/mise-action@v4
+        uses: jdx/mise-action@v5
         with:
           install_args: rust mr-boxington
-      - name: Set up Rust cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
+      - name: Set up mr-boxington
+        uses: jdx/mr-boxington-action@v1
       - name: Check formatting
         run: mise run fmt:check
       - name: Lint
@@ -73,13 +71,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Set up mise
-        uses: jdx/mise-action@v4
+        uses: jdx/mise-action@v5
         with:
           install_args: rust mr-boxington
-      - name: Set up Rust cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
+      - name: Set up mr-boxington
+        uses: jdx/mr-boxington-action@v1
       - name: Build
         run: mise run build
 
@@ -93,13 +89,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Set up mise
-        uses: jdx/mise-action@v4
+        uses: jdx/mise-action@v5
         with:
           install_args: rust mr-boxington
-      - name: Set up Rust cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
+      - name: Set up mr-boxington
+        uses: jdx/mr-boxington-action@v1
       - name: Run tests
         run: mise run test
 
@@ -110,7 +104,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Set up mise
-        uses: jdx/mise-action@v4
+        uses: jdx/mise-action@v5
         with:
           install_args: actionlint
       - name: Lint workflows
@@ -123,7 +117,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Set up mise
-        uses: jdx/mise-action@v4
+        uses: jdx/mise-action@v5
         with:
           install_args: yamlfmt
       - name: Lint YAML
